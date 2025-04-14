@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Learning App</title>
+    <link rel="stylesheet" href="style.css"> <!-- Link to CSS -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico"> <!-- Favicon -->
+</head>
+<body>
+    <!-- CSRF Token for Django -->
+    <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
+    <header>
+        <h1>Vocabulary Learning App</h1>
+        <div class="header-buttons">
+            <button id="login-button">🔑 Login</button>
+            <button id="toggle-dark-mode" class="toggle-btn">🌙</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Flashcards Section -->
+        <section id="flashcard-section">
+            <h2>Flashcards</h2>
+            <div id="flashcard-container">
+                <div id="flashcard" class="flashcard">
+                    <div class="flashcard-item">
+                        <strong>Word:</strong> <span class="flashcard-text">Word will appear here</span>
+                    </div>
+                    <div class="flashcard-item">
+                        <strong>Meaning:</strong> <span class="flashcard-text">Meaning will appear here</span>
+                    </div>
+                    <div class="flashcard-item">
+                        <strong>Example:</strong> <span class="flashcard-text">Example sentence will appear here</span>
+                    </div>
+                    <div class="flashcard-item">
+                        <strong>Synonyms:</strong> <span class="flashcard-text">N/A</span>
+                    </div>
+                    <div class="flashcard-item">
+                        <strong>Antonyms:</strong> <span class="flashcard-text">N/A</span>
+                    </div>
+                </div>
+                <div id="flashcard-controls" class="nav-buttons">
+                    <button id="prev-flashcard" class="nav-btn">⬅ Previous</button>
+                    <button id="next-flashcard" class="nav-btn">Next ➡</button>
+                    <button id="shuffle-flashcards" class="nav-btn">🔀 Shuffle</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Flashcards Section -->
+        <section id="add-flashcard-section">
+            <h2>Add a Flashcard</h2>
+            <form id="flashcard-form">
+                <input type="text" id="word" placeholder="Word" required>
+                <input type="text" id="meaning" placeholder="Meaning" required>
+                <input type="text" id="example_sentence" placeholder="Example Sentence">
+                <input type="text" id="synonyms" placeholder="Synonyms (comma-separated)">
+                <input type="text" id="antonyms" placeholder="Antonyms (comma-separated)">
+                <button type="submit" class="nav-btn">Add Flashcard</button>
+            </form>
+        </section>
+
+        <!-- Saved Flashcards Section -->
+        <section id="saved-flashcards-section">
+            <h2>Saved Flashcards</h2>
+            <button id="toggle-saved-flashcards" class="toggle-btn">Show Saved Flashcards</button>
+            <ul id="flashcard-list" class="flashcard-list hidden"></ul>
+        </section>
+
+        <!-- Quiz Section -->
+        <section id="quiz-section">
+            <h2>Quiz</h2>
+            <p id="quiz-question">Question will appear here</p>
+            <input type="text" id="quiz-answer" placeholder="Type your answer...">
+            <button id="submit-answer" class="nav-btn">Submit</button>
+            <button id="next-question" class="nav-btn" style="display:none;">Next Question</button>
+            <p id="quiz-feedback"></p>
+            <p id="quiz-score">Score: 0</p>
+        </section>
+    </main>
+
+    <script src="script.js"></script> <!-- Link to JavaScript -->
+</body>
+</html>

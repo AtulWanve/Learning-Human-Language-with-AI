@@ -1,0 +1,231 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    color: #333;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+        color: white;
+    }
+}
+
+body.dark-mode {
+    background-color: #121212;
+    color: white;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #4CAF50;
+    color: white;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+#toggle-dark-mode,
+#login-button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: white;
+}
+
+#toggle-dark-mode:hover,
+#login-button:hover {
+    opacity: 0.8;
+}
+
+/* Sections */
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 10px;
+}
+
+section {
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode section {
+    background-color: #1e1e1e;
+    color: white;
+}
+
+/* Flashcard */
+#flashcard {
+    font-size: 22px;
+    padding: 20px;
+    text-align: center;
+    background-color: #e3f2fd;
+    color: #333;
+    border-radius: 10px;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.flashcard-item {
+    margin-bottom: 15px;
+}
+
+.flashcard-item strong {
+    display: inline-block;
+    width: 120px;
+    font-weight: bold;
+}
+
+.flashcard-text {
+    font-style: italic;
+}
+
+.dark-mode #flashcard {
+    background-color: #333;
+    color: white;
+}
+
+/* Buttons */
+button {
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    color: white;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button:focus {
+    outline: 3px solid #ffbf00;
+}
+
+/* Navigation Buttons */
+.nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.nav-btn {
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    color: white;
+    transition: background 0.3s;
+}
+
+.nav-btn:hover {
+    background-color: #45a049;
+}
+
+.nav-btn:focus {
+    outline: 3px solid #ffbf00;
+}
+
+/* Next Question Button */
+#next-question {
+    background-color: #008CBA; /* Blue color */
+}
+
+#next-question:hover {
+    background-color: #007B9A;
+}
+
+/* Inputs */
+input[type="text"] {
+    padding: 10px;
+    width: calc(100% - 20px);
+    margin: 10px 0;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.dark-mode input[type="text"] {
+    background-color: #444;
+    color: white;
+    border: 1px solid #777;
+}
+
+/* Flashcard List */
+#flashcard-list {
+    list-style: none;
+    padding: 0;
+}
+
+#flashcard-list li {
+    padding: 10px;
+    background-color: #ddd;
+    margin: 5px 0;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dark-mode #flashcard-list li {
+    background-color: #444;
+}
+
+/* Delete button */
+.delete-btn {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+/* Hide saved flashcards initially */
+.hidden {
+    display: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    body {
+        font-size: 14px;
+    }
+
+    .container {
+        width: 95%;
+        padding: 5px;
+    }
+
+    #flashcard {
+        font-size: 16px;
+    }
+
+    button {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+}
