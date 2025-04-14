@@ -1,9 +1,12 @@
 from pymongo import MongoClient
 
-def get_database():
-    client = MongoClient("mongodb://localhost:27017/")  # Connect to MongoDB
-    return client["vocab_db"]  # Database name
+# MongoDB Connection
+MONGO_URI = "mongodb://localhost:27017/"
+DB_NAME = "vocab_db"
 
-# Create a reference to the flashcards collection
-db = get_database()
-flashcards_collection = db["flashcards"]
+# Create a MongoDB client and connect to the database
+client = MongoClient(MONGO_URI)
+db = client[DB_NAME]
+
+# Collections (Tables in SQL terms)
+flashcards_collection = db["flashcards"]  # Collection for storing flashcards

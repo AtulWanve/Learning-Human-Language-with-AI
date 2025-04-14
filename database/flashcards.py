@@ -1,34 +1,33 @@
-from database.db import flashcards_collection  # Import the collection
+from database.db import flashcards_collection
 
-def add_flashcard(word, meaning):
-    flashcards_collection.insert_one({"word": word, "meaning": meaning})
-    print(f"Added: {word} -> {meaning}")
+def add_flashcard(word, meaning, example_sentence="", synonyms=None, antonyms=None):
+    if synonyms is None:
+        synonyms = []
+    if antonyms is None:
+        antonyms = []
 
-def quiz_flashcards():
-    flashcards = list(flashcards_collection.find())
+    # Check for duplicates before inserting
+    existing = flashcards_collection.find_one({"word": word})
+    if existing:
+        return None  # Return None if the flashcard already exists
+    
+    new_flashcard = {
+        "word": word,
+        "meaning": meaning,
+        "example_sentence": example_sentence,
+        "synonyms": synonyms,
+        "antonyms": antonyms
+    }
+    result = flashcards_collection.insert_one(new_flashcard)
+    return str(result.inserted_id)  # Return the inserted ID as a string
 
-    if not flashcards:
-        print("No flashcards available. Add some first!")
-        return
+def get_flashcards():
+    # Fetch and return all flashcards, excluding the MongoDB ObjectId
+    flashcards = list(flashcards_collection.find({}, {"_id": 0}))
+    return flashcards
 
-    score = 0
-    for flashcard in flashcards:
-        answer = input(f"What is the meaning of '{flashcard['word']}'? ").strip()
-        if answer.lower() == flashcard['meaning'].lower():
-            print("✅ Correct!")
-            score += 1
-        else:
-            print(f"❌ Wrong! The correct answer is: {flashcard['meaning']}")
-
-    print(f"\nQuiz Over! Your Score: {score}/{len(flashcards)}")
-
-def list_flashcards():
-    flashcards = list(flashcards_collection.find())
-
-    if not flashcards:
-        print("No flashcards available.")
-        return
-
-    print("\nStored Flashcards:")
-    for flashcard in flashcards:
-        print(f"- {flashcard['word']}: {flashcard['meaning']}")
+def delete_flashcard(word):
+    result = flashcards_collection.delete_one({"word": word})
+    if result.deleted_count == 1:
+        return True
+    return False
