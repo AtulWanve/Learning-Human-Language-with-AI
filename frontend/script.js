@@ -1,246 +1,416 @@
-document.addEventListener("DOMContentLoaded", function () {
-    let flashcards = [];
-    let currentFlashcardIndex = 0;
-    let showingDefinition = false;
-    let quizIndex = 0;
-    let score = 0;
-    let randomFlashcards = [];
-    const API_URL = "http://127.0.0.1:8000/api";
+// script.js
+document.addEventListener('DOMContentLoaded', () => {
+  const appState = {
+    flashcards: [],
+    currentFlashcardIndex: 0,
+    showingDefinition: false,
+    quizIndex: 0,
+    score: 0,
+    randomFlashcards: [],
+    loading: false,
+  };
 
-    // Apply system theme preference or saved theme
-    function applyTheme() {
-        const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const savedTheme = localStorage.getItem("theme");
-        const isDarkMode = savedTheme ? savedTheme === "dark" : systemPrefersDark;
-        document.body.classList.toggle("dark-mode", isDarkMode);
+  const API_URL = 'http://127.0.0.1:8000/api';
+
+  const get = (id) => document.getElementById(id);
+
+  const flashcardElement = get('flashcard');
+  const flashcardWord = get('flashcard-word');
+  const flashcardMeaning = get('flashcard-meaning');
+  const flashcardExample = get('flashcard-example');
+  const flashcardSynonyms = get('flashcard-synonyms');
+  const flashcardAntonyms = get('flashcard-antonyms');
+  const prevBtn = get('prev-flashcard');
+  const nextBtn = get('next-flashcard');
+  const shuffleBtn = get('shuffle-flashcards');
+  const form = get('flashcard-form');
+  const wordInput = get('word');
+  const meaningInput = get('meaning');
+  const exampleInput = get('example_sentence');
+  const synonymsInput = get('synonyms');
+  const antonymsInput = get('antonyms');
+  const addMessage = get('add-flashcard-message');
+  const savedList = get('flashcard-list');
+  const toggleSavedBtn = get('toggle-saved-flashcards');
+  const savedMessage = get('saved-flashcards-message');
+  const quizQuestion = get('quiz-question');
+  const quizAnswer = get('quiz-answer');
+  const submitBtn = get('submit-answer');
+  const nextQBtn = get('next-question');
+  const quizFeedback = get('quiz-feedback');
+  const quizScore = get('quiz-score');
+  const startQuizBtn = get('start-quiz');
+  const toggleDarkBtn = get('toggle-dark-mode');
+  const searchToggle = get('search-toggle');
+  const searchInput = get('header-search-input');
+  const loginBtn = get('login-button');
+
+  const lightVars = {
+    '--bg-body': '#f0f0f0',
+    '--text-primary': '#333',
+    '--bg-section': 'white',
+    '--shadow-color': 'rgba(0,0,0,0.1)',
+    '--accent-color': '#4CAF50',
+    '--accent-hover': '#45a049',
+    '--input-bg': 'white',
+    '--input-border': '#ccc',
+    '--input-text': '#333',
+    '--flashcard-bg': '#e3f2fd',
+    '--flashcard-border': '#4CAF50',
+    '--delete-bg': '#ff4d4d',
+    '--delete-hover': '#cc0000',
+  };
+
+  const darkVars = {
+    '--bg-body': '#121212',
+    '--text-primary': 'white',
+    '--bg-section': '#1e1e1e',
+    '--shadow-color': 'rgba(255,255,255,0.1)',
+    '--accent-color': '#66bb6a',
+    '--accent-hover': '#558b2f',
+    '--input-bg': '#444',
+    '--input-border': '#777',
+    '--input-text': 'white',
+    '--flashcard-bg': '#333',
+    '--flashcard-border': '#66bb6a',
+    '--delete-bg': '#e57373',
+    '--delete-hover': '#d32f2f',
+  };
+
+  // Update login button text based on token presence
+  function updateLoginButtonText() {
+    const token = localStorage.getItem('auth_token');
+    loginBtn.textContent = token ? '🔓 Logout' : '🔑 Login';
+  }
+
+  function applyCSSVars(vars) {
+    Object.entries(vars).forEach(([key, val]) => {
+      document.documentElement.style.setProperty(key, val);
+    });
+  }
+
+function applyTheme() {
+  // 1. mark “no saved preference” on <html> if nothing in localStorage
+  if (!localStorage.getItem('theme')) {
+    document.documentElement.classList.add('no-theme');
+  } else {
+    document.documentElement.classList.remove('no-theme');
+  }
+
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const saved = localStorage.getItem('theme');
+  const dark = saved ? saved === 'dark' : prefersDark;
+
+  document.body.classList.toggle('dark-mode', dark);
+  applyCSSVars(dark ? darkVars : lightVars);
+}
+
+
+function updateLoginUI() {
+  const token = localStorage.getItem('token');
+  const deleteFlashcardButtons = document.querySelectorAll('.delete-btn');
+  const addFlashcardButton = get('add-flashcard-btn');
+  
+}
+
+
+// Toggle login status function
+function toggleLoginStatus() {
+  const token = localStorage.getItem('token');
+  
+  if (token) {
+    localStorage.removeItem('token'); // Remove token (logout)
+    console.log('Logged out. Token removed.');
+    updateLoginButtonText(); // Update button text after logout
+    updateLoginUI();
+  } else {
+    console.log('Already logged out, redirecting to login page.');
+    window.location.href = 'login.html';
+  }
+}
+
+
+
+// Login Button Setup 
+if (loginBtn) {
+  loginBtn.textContent = localStorage.getItem('token') ? '🔓 Logout' : '🔑 Login';
+  loginBtn.addEventListener('click', toggleLoginStatus);
+} else {
+  console.error('Login button not found!');
+}
+  
+  function toggleDarkMode() {
+    const dark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    applyCSSVars(dark ? darkVars : lightVars);
+  
+    console.log('toggleDarkMode -> new mode:', dark ? 'dark' : 'light');
+    console.log('toggleDarkMode -> stored in localStorage:', localStorage.getItem('theme'));
+  }
+  
+  toggleDarkBtn.addEventListener('click', toggleDarkMode);
+  applyTheme();
+  updateLoginButtonText();
+  updateLoginUI();
+
+  // Check login state on page load
+  const token = localStorage.getItem('auth_token'); // Changed to 'auth_token'
+  if (token) {
+    // User is "logged in"
+    loginBtn.textContent = '🔓 Logout';
+    loginBtn.classList.add('logged-in');
+  } else {
+    // User is not logged in
+    loginBtn.textContent = '🔑 Login';
+    loginBtn.classList.remove('logged-in');
+  }
+
+
+  toggleSavedBtn.addEventListener('click', () => {
+    savedList.classList.toggle('hidden');
+    savedMessage.classList.toggle('hidden');
+    toggleSavedBtn.textContent = savedList.classList.contains('hidden')
+      ? 'Show My Flashcards'
+      : 'Hide My Flashcards';
+  });
+
+  function getCSRFToken() {
+    return get('csrf-token')?.value || '';
+  }
+
+  async function fetchFlashcards() {
+    try {
+      const res = await fetch(`${API_URL}/all/`);
+      const data = await res.json();
+      appState.flashcards = data.flashcards || [];
+      appState.currentFlashcardIndex = 0;
+      updateFlashcardList();
+      displayFlashcard();
+      updateNavButtons();
+      startQuizBtn.disabled = appState.flashcards.length < 5;
+    } catch {
+      flashcardElement.textContent = 'Error loading flashcards.';
+      startQuizBtn.disabled = true;
+    }
+  }
+
+  function displayFlashcard() {
+    const fc = appState.flashcards[appState.currentFlashcardIndex];
+    if (!fc) return flashcardElement.textContent = 'No flashcards available!';
+    const show = appState.showingDefinition;
+
+    flashcardWord.parentElement.style.display = show ? 'none' : 'block';
+    flashcardMeaning.parentElement.style.display = show ? 'block' : 'none';
+    flashcardExample.parentElement.style.display = show ? 'block' : 'none';
+    flashcardSynonyms.parentElement.style.display = show ? 'block' : 'none';
+    flashcardAntonyms.parentElement.style.display = show ? 'block' : 'none';
+
+    flashcardWord.textContent = fc.word;
+    flashcardMeaning.textContent = fc.meaning || 'N/A';
+    flashcardExample.textContent = fc.example_sentence || 'N/A';
+    flashcardSynonyms.textContent = (fc.synonyms || []).join(', ') || 'N/A';
+    flashcardAntonyms.textContent = (fc.antonyms || []).join(', ') || 'N/A';
+  }
+
+  flashcardElement.addEventListener('click', () => {
+    if (!appState.flashcards.length) return;
+    appState.showingDefinition = !appState.showingDefinition;
+    displayFlashcard();
+  });
+
+  function updateNavButtons() {
+    prevBtn.disabled = appState.currentFlashcardIndex === 0;
+    nextBtn.disabled = appState.currentFlashcardIndex >= appState.flashcards.length - 1;
+  }
+
+  prevBtn.addEventListener('click', () => {
+    if (appState.currentFlashcardIndex > 0) {
+      appState.currentFlashcardIndex--;
+      appState.showingDefinition = false;
+      displayFlashcard();
+      updateNavButtons();
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (appState.currentFlashcardIndex < appState.flashcards.length - 1) {
+      appState.currentFlashcardIndex++;
+      appState.showingDefinition = false;
+      displayFlashcard();
+      updateNavButtons();
+    }
+  });
+
+  shuffleBtn.addEventListener('click', () => {
+    appState.flashcards.sort(() => Math.random() - 0.5);
+    appState.currentFlashcardIndex = 0;
+    appState.showingDefinition = false;
+    displayFlashcard();
+    updateNavButtons();
+  });
+
+  function updateFlashcardList() {
+    savedList.innerHTML = '';
+    if (!appState.flashcards.length) {
+      savedMessage.classList.remove('hidden');
+      return;
+    }
+    savedMessage.classList.add('hidden');
+    appState.flashcards.forEach(fc => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${fc.word}:</strong> ${fc.meaning || 'N/A'}`;
+      const btn = document.createElement('button');
+      btn.textContent = '❌';
+      btn.classList.add('delete-btn');
+      btn.onclick = () => deleteFlashcard(fc._id);
+      li.appendChild(btn);
+      savedList.appendChild(li);
+    });
+  }
+
+  async function deleteFlashcard(id) {
+    if (!confirm('Delete this flashcard?')) return;
+    try {
+      const res = await fetch(`${API_URL}/delete/`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ id })
+      });
+      if (!res.ok) throw await res.json();
+      appState.flashcards = appState.flashcards.filter(f => f._id !== id);
+      updateFlashcardList();
+      appState.currentFlashcardIndex = Math.min(appState.currentFlashcardIndex, appState.flashcards.length - 1);
+      displayFlashcard();
+      updateNavButtons();
+    } catch (err) {
+      alert(err.error || 'Error deleting flashcard.');
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    addMessage.classList.add('hidden');
+    const word = wordInput.value.trim();
+    const meaning = meaningInput.value.trim();
+    const example = exampleInput.value.trim();
+    const synonyms = synonymsInput.value.split(',').map(s => s.trim()).filter(Boolean);
+    const antonyms = antonymsInput.value.split(',').map(a => a.trim()).filter(Boolean);
+    if (!word || !meaning) {
+      alert('Please enter both word and meaning!');
+      return;
     }
 
-    function toggleDarkMode() {
-        const isDark = document.body.classList.toggle("dark-mode");
-        localStorage.setItem("theme", isDark ? "dark" : "light");
+    try {
+      const res = await fetch(`${API_URL}/add/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ word, meaning, example_sentence: example, synonyms, antonyms })
+      });
+      const result = await res.json();
+      if (!res.ok) throw result;
+      addMessage.textContent = 'Flashcard added successfully!';
+      form.reset();
+      await fetchFlashcards();
+    } catch (err) {
+      addMessage.textContent = err?.error || 'Failed to add flashcard.';
+    } finally {
+      addMessage.classList.remove('hidden');
     }
+  });
 
-    document.getElementById("toggle-dark-mode").addEventListener("click", toggleDarkMode);
-    applyTheme();
+  startQuizBtn.addEventListener('click', () => {
+    if (appState.flashcards.length < 5) return;
+    appState.randomFlashcards = [...appState.flashcards].sort(() => Math.random() - 0.5).slice(0, 5);
+    appState.quizIndex = 0;
+    appState.score = 0;
+    displayQuizQuestion();
+    quizFeedback.textContent = '';
+    quizScore.textContent = '';
+    submitBtn.classList.remove('hidden');
+    nextQBtn.classList.add('hidden');
+  });
 
-    // Hide saved flashcards initially
-    let savedFlashcardsList = document.getElementById("flashcard-list");
-    savedFlashcardsList.classList.add("hidden");
+  function displayQuizQuestion() {
+    const { word } = appState.randomFlashcards[appState.quizIndex];
+    quizQuestion.textContent = `What is the meaning of "${word}"?`;
+    quizAnswer.value = '';
+    quizFeedback.textContent = '';
+    submitBtn.classList.remove('hidden');
+    nextQBtn.classList.add('hidden');
+  }
 
-    document.getElementById("toggle-saved-flashcards").addEventListener("click", function () {
-        savedFlashcardsList.classList.toggle("hidden");
-        this.textContent = savedFlashcardsList.classList.contains("hidden") ? "Show Saved Flashcards" : "Hide Saved Flashcards";
+  submitBtn.addEventListener('click', () => {
+    const userAns = quizAnswer.value.trim().toLowerCase();
+    const correct = appState.randomFlashcards[appState.quizIndex].meaning.toLowerCase();
+    if (!userAns) return quizFeedback.textContent = 'Please enter an answer!';
+    if (userAns === correct) {
+      appState.score++;
+      quizFeedback.textContent = '✅ Correct!';
+    } else {
+      quizFeedback.textContent = `❌ Incorrect! Correct: "${correct}"`;
+    }
+    submitBtn.classList.add('hidden');
+    nextQBtn.classList.remove('hidden');
+  });
+
+  nextQBtn.addEventListener('click', () => {
+    appState.quizIndex++;
+    if (appState.quizIndex < appState.randomFlashcards.length) {
+      displayQuizQuestion();
+    } else {
+      quizQuestion.textContent = 'Quiz Completed!';
+      quizScore.textContent = `Your Score: ${appState.score} / ${appState.randomFlashcards.length}`;
+      submitBtn.classList.add('hidden');
+      nextQBtn.classList.add('hidden');
+    }
+  });
+
+  // 🔍 Search toggle functionality
+  if (searchToggle && searchInput) {
+    searchToggle.addEventListener('click', () => {
+      searchInput.classList.toggle('open');
+      if (searchInput.classList.contains('open')) {
+        searchInput.focus();
+      } else {
+        searchInput.value = '';
+      }
     });
 
-    // Fetch flashcards from API
-    async function fetchFlashcards() {
-        try {
-            const response = await fetch(`${API_URL}/all/`);
-            const data = await response.json();
-            if (data.flashcards && data.flashcards.length > 0) {
-                flashcards = data.flashcards;
-                currentFlashcardIndex = 0;
-                updateFlashcardList();
-                displayFlashcard();
-                updateNavButtons();
-                startQuiz();
-            } else {
-                document.getElementById("flashcard").textContent = "No flashcards available!";
-                flashcards = [];
-            }
-        } catch (error) {
-            console.error("Error fetching flashcards:", error);
-        }
-    }
-
-    // Display flashcard
-    function displayFlashcard() {
-        let flashcardElement = document.getElementById("flashcard");
-        if (flashcards.length === 0) {
-            flashcardElement.textContent = "No flashcards available!";
-            return;
-        }
-        let flashcard = flashcards[currentFlashcardIndex];
-        flashcardElement.innerHTML = showingDefinition
-            ? `<strong>Meaning:</strong> ${flashcard.meaning || "N/A"}<br>
-               <strong>Example:</strong> ${flashcard.example_sentence || "N/A"}<br>
-               <strong>Synonyms:</strong> ${flashcard.synonyms?.length ? flashcard.synonyms.join(", ") : "N/A"}<br>
-               <strong>Antonyms:</strong> ${flashcard.antonyms?.length ? flashcard.antonyms.join(", ") : "N/A"}<br>`
-            : `<strong>Word:</strong> ${flashcard.word}`;
-    }
-
-    document.getElementById("flashcard").addEventListener("click", function () {
-        showingDefinition = !showingDefinition;
-        displayFlashcard();
+    // Close the search bar when clicking outside of it
+    document.addEventListener('click', (e) => {
+      const isClickInside = searchInput.contains(e.target) || searchToggle.contains(e.target);
+      if (!isClickInside && searchInput.classList.contains('open')) {
+        searchInput.classList.remove('open');
+        searchInput.value = '';
+      }
     });
+    
+    // Add a keydown event listener to check for Enter key press
+    searchInput.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        const searchTerm = searchInput.value.trim().toLowerCase();
 
-    function updateNavButtons() {
-        document.getElementById("prev-flashcard").disabled = currentFlashcardIndex === 0;
-        document.getElementById("next-flashcard").disabled = currentFlashcardIndex === flashcards.length - 1;
-    }
+// Find index of the matching flashcard
+const index = appState.flashcards.findIndex(fc => fc.word.toLowerCase() === searchTerm);
 
-    document.getElementById("prev-flashcard").addEventListener("click", function () {
-        if (currentFlashcardIndex > 0) {
-            currentFlashcardIndex--;
-            showingDefinition = false;
-            displayFlashcard();
-            updateNavButtons();
-        }
+if (index !== -1) {
+  const matchedFlashcard = appState.flashcards[index];
+  console.log('Found flashcard at index:', index);
+  console.log('Matched flashcard:', matchedFlashcard);
+  appState.currentFlashcardIndex=index
+  flashcardWord.textContent = matchedFlashcard.word;
+} else {
+  console.log('Flashcard not found.');
+}
+      }
     });
+  }
 
-    document.getElementById("next-flashcard").addEventListener("click", function () {
-        if (currentFlashcardIndex < flashcards.length - 1) {
-            currentFlashcardIndex++;
-            showingDefinition = false;
-            displayFlashcard();
-            updateNavButtons();
-        }
-    });
-
-    document.getElementById("shuffle-flashcards").addEventListener("click", function () {
-        flashcards.sort(() => Math.random() - 0.5);
-        currentFlashcardIndex = 0;
-        showingDefinition = false;
-        displayFlashcard();
-        updateNavButtons();
-    });
-
-    // Update flashcard list
-    function updateFlashcardList() {
-        let list = document.getElementById("flashcard-list");
-        list.innerHTML = "";
-        flashcards.forEach((flashcard, index) => {
-            let li = document.createElement("li");
-            li.innerHTML = `<strong>${flashcard.word}:</strong> ${flashcard.meaning || "N/A"}`;
-            let deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "❌";
-            deleteBtn.classList.add("delete-btn");
-            deleteBtn.onclick = () => deleteFlashcard(index);
-            li.appendChild(deleteBtn);
-            list.appendChild(li);
-        });
-    }
-
-    // Delete flashcard
-    async function deleteFlashcard(index) {
-        try {
-            const response = await fetch(`${API_URL}/delete/`, {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ word: flashcards[index].word })
-            });
-
-            if (response.ok) {
-                flashcards.splice(index, 1);
-                updateFlashcardList();
-                if (flashcards.length === 0) {
-                    document.getElementById("flashcard").textContent = "No flashcards available!";
-                } else {
-                    currentFlashcardIndex = Math.min(currentFlashcardIndex, flashcards.length - 1);
-                    displayFlashcard();
-                    updateNavButtons();
-                }
-            }
-        } catch (error) {
-            console.error("Error deleting flashcard:", error);
-        }
-    }
-
-    // Add flashcard
-    document.getElementById("flashcard-form").addEventListener("submit", async function (event) {
-        event.preventDefault();
-
-        let word = document.getElementById("word").value.trim();
-        let meaning = document.getElementById("meaning").value.trim();
-        let example_sentence = document.getElementById("example_sentence").value.trim();
-        let synonyms = document.getElementById("synonyms").value.trim().split(",").map(s => s.trim());
-        let antonyms = document.getElementById("antonyms").value.trim().split(",").map(a => a.trim());
-
-        if (!word || !meaning) {
-            alert("Please enter both word and meaning!");
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_URL}/add/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ word, meaning, example_sentence, synonyms, antonyms })
-            });
-
-            if (response.status === 409) {
-                const errorData = await response.json();
-                alert(errorData.error);
-            } else if (response.ok) {
-                await fetchFlashcards();
-                document.getElementById("flashcard-form").reset();
-            } else {
-                throw new Error("Something went wrong!");
-            }
-        } catch (error) {
-            console.error("Error adding flashcard:", error);
-        }
-    });
-
-    // Quiz Functionality
-    function startQuiz() {
-        if (flashcards.length === 0) {
-            document.getElementById("quiz-question").textContent = "No flashcards available!";
-            return;
-        }
-        // Select up to 5 random flashcards for the quiz
-        randomFlashcards = flashcards.sort(() => Math.random() - 0.5).slice(0, 5);
-        quizIndex = 0;
-        score = 0;
-        displayQuizQuestion();
-    }
-
-    function displayQuizQuestion() {
-        if (quizIndex < randomFlashcards.length) {
-            document.getElementById("quiz-question").textContent = `What is the meaning or synonym of "${randomFlashcards[quizIndex].word}"?`;
-            document.getElementById("quiz-score").textContent = `Score: ${score}`;
-            document.getElementById("next-question").style.display = "none"; // Hide the Next Question button initially
-        } else {
-            document.getElementById("quiz-question").textContent = `Quiz Over! Final Score: ${score}/${randomFlashcards.length}`;
-            document.getElementById("submit-answer").style.display = "none";
-        }
-    }
-
-    document.getElementById("submit-answer").addEventListener("click", function () {
-        const userAnswer = document.getElementById("quiz-answer").value.trim().toLowerCase();
-        const flashcard = randomFlashcards[quizIndex];
-        const correctMeaning = flashcard.meaning.toLowerCase();
-        const correctSynonyms = flashcard.synonyms ? flashcard.synonyms.map(s => s.toLowerCase()) : [];
-
-        // Check if the user's answer is correct (either meaning or synonym)
-        if (userAnswer === correctMeaning || correctSynonyms.includes(userAnswer)) {
-            score++;
-        }
-
-        // Update score in real-time when answer is submitted
-        document.getElementById("quiz-score").textContent = `Score: ${score}`;
-
-        // Hide the submit button and show the next question button
-        document.getElementById("submit-answer").style.display = "none";
-        document.getElementById("next-question").style.display = "block";
-    });
-
-    // Add event listener for Next Question button
-    document.getElementById("next-question").addEventListener("click", function () {
-        quizIndex++;
-        if (quizIndex < randomFlashcards.length) {
-            displayQuizQuestion();
-            document.getElementById("quiz-answer").value = "";  // Clear the input field
-            document.getElementById("submit-answer").style.display = "block";  // Show Submit button again
-            document.getElementById("next-question").style.display = "none";  // Hide Next Question button
-        } else {
-            document.getElementById("quiz-question").textContent = `Quiz Over! Final Score: ${score}/${randomFlashcards.length}`;
-            document.getElementById("next-question").style.display = "none";
-            document.getElementById("submit-answer").style.display = "none";
-        }
-    });
-
-    document.getElementById("login-button").addEventListener("click", () => window.location.href = "login.html");
-
-    fetchFlashcards();
+  fetchFlashcards();
 });
