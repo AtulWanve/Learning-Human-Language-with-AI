@@ -42,16 +42,16 @@ h1 {
 
 .dark-mode .container {
     background-color: #1e1e1e;
-    color: #ffffff;
+    color: #333;
 }
 
 /* Welcome Message and "Remember Me" in Dark Mode */
 .dark-mode .card h2 {
-    color: #ffffff;
+    color: #333;
 }
 
 .dark-mode .checkbox-label {
-    color: #ffffff;
+    color: #333;
 }
 
 /* Container for Login/Signup Cards */
@@ -89,34 +89,66 @@ h1 {
 }
 
 input {
-    width: calc(100% - 40px);
-    padding: 10px;
+    width: 100%;
+    padding: 10px 40px 10px 10px;
+    /* padding-right: 35px; */
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 14px;
     box-sizing: border-box;
 }
 
+/* Hide default password reveal icon in Chrome, Edge, Brave, etc. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-clear-button,
+input[type="password"]::-webkit-inner-spin-button {
+    display: none !important;
+    appearance: none;
+}
+
+
 /* Show Password Button */
 .toggle-password {
     position: absolute;
-    right: 10px;
+    right: 2px;
     top: 50%;
     transform: translateY(-50%);
-    background: none;
+    background: transparent;
     border: none;
     cursor: pointer;
     font-size: 14px;
-    padding: 5px;
+    height: 100%;
+    padding: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+.toggle-password svg {
+    width: 20px;
+    height: 20px;
+    stroke: #333; /* Visible in light mode */
+}
+
+.dark-mode .toggle-password svg {
+    stroke: #333; /* Visible in dark mode */
+}
+
 
 /* Remember Me */
 .checkbox-label {
     display: flex;
     align-items: center;
     justify-content: start;
-    font-size: 14px;
+    font-size: 16px;
     margin-bottom: 15px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    white-space: nowrap;
 }
 
 /* Buttons */
@@ -152,4 +184,11 @@ input {
     font-size: 18px;
     cursor: pointer;
     padding: 5px;
+}
+
+@media (max-width: 600px) {
+    .container {
+        width: 90%; /* Or another appropriate percentage */
+        max-width: 350px; /* Keep a maximum width for larger mobile screens */
+    }
 }
