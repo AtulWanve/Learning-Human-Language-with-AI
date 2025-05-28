@@ -43,7 +43,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggleDarkBtn = get('toggle-dark-mode');
   const searchToggle = get('search-toggle');
   const searchInput = get('header-search-input');
-  const loginBtn = get('login-button');
+  const loginBtn = get("login-logout-button");
+  const correctMeaning = get('correct-meaning');
+  const meaningText = get('meaning-text');
+
+
+  quizQuestion.classList.add('hidden');
+  quizAnswer.classList.add('hidden');
+  quizFeedback.classList.add('hidden');
+  quizScore.classList.add('hidden');
+  submitBtn.classList.add('hidden');
+  nextQBtn.classList.add('hidden');
+
 
   const lightVars = {
     '--bg-body': '#f0f0f0',
@@ -107,33 +118,34 @@ function applyTheme() {
 
 
 function updateLoginUI() {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('auth_token');
   const deleteFlashcardButtons = document.querySelectorAll('.delete-btn');
-  const addFlashcardButton = get('add-flashcard-btn');
   
 }
 
 
 // Toggle login status function
 function toggleLoginStatus() {
-  const token = localStorage.getItem('token');
-  
+  const token = localStorage.getItem('auth_token');
+
   if (token) {
-    localStorage.removeItem('token'); // Remove token (logout)
+    localStorage.removeItem('auth_token'); // Remove token (logout)
     console.log('Logged out. Token removed.');
     updateLoginButtonText(); // Update button text after logout
     updateLoginUI();
+    window.location.reload();
   } else {
     console.log('Already logged out, redirecting to login page.');
+    updateLoginButtonText();
+    updateLoginUI();
     window.location.href = 'login.html';
   }
 }
 
 
-
 // Login Button Setup 
 if (loginBtn) {
-  loginBtn.textContent = localStorage.getItem('token') ? '🔓 Logout' : '🔑 Login';
+  loginBtn.textContent = localStorage.getItem('auth_token') ? '🔓 Logout' : '🔑 Login';
   loginBtn.addEventListener('click', toggleLoginStatus);
 } else {
   console.error('Login button not found!');
@@ -329,11 +341,18 @@ if (loginBtn) {
     appState.randomFlashcards = [...appState.flashcards].sort(() => Math.random() - 0.5).slice(0, 5);
     appState.quizIndex = 0;
     appState.score = 0;
-    displayQuizQuestion();
-    quizFeedback.textContent = '';
-    quizScore.textContent = '';
+    quizQuestion.classList.remove('hidden');
+    quizAnswer.classList.remove('hidden');
+    quizAnswer.disabled = false;
+    quizFeedback.classList.remove('hidden');
+    quizScore.classList.remove('hidden');
     submitBtn.classList.remove('hidden');
     nextQBtn.classList.add('hidden');
+    
+    quizFeedback.textContent = '';
+    quizScore.textContent = '';
+    
+    displayQuizQuestion();
   });
 
   function displayQuizQuestion() {
@@ -341,31 +360,73 @@ if (loginBtn) {
     quizQuestion.textContent = `What is the meaning of "${word}"?`;
     quizAnswer.value = '';
     quizFeedback.textContent = '';
+    quizAnswer.disabled = false;
+    quizAnswer.classList.remove('hidden');
     submitBtn.classList.remove('hidden');
     nextQBtn.classList.add('hidden');
+    correctMeaning.classList.add('hidden');
+
   }
 
   submitBtn.addEventListener('click', () => {
-    const userAns = quizAnswer.value.trim().toLowerCase();
-    const correct = appState.randomFlashcards[appState.quizIndex].meaning.toLowerCase();
-    if (!userAns) return quizFeedback.textContent = 'Please enter an answer!';
-    if (userAns === correct) {
-      appState.score++;
-      quizFeedback.textContent = '✅ Correct!';
-    } else {
-      quizFeedback.textContent = `❌ Incorrect! Correct: "${correct}"`;
+  const flashcard = appState.randomFlashcards[appState.quizIndex];
+
+  if (!flashcard) {
+    quizFeedback.textContent = '⚠️ Please start the quiz first!';
+    return;
+  }
+
+  const userAns = quizAnswer.value.trim().toLowerCase();
+
+  const validAnswers = [
+    flashcard.meaning.toLowerCase(),
+    ...(Array.isArray(flashcard.synonyms) ? flashcard.synonyms.map(s => s.toLowerCase()) : [])
+  ];
+
+  if (!userAns) {
+    quizFeedback.textContent = 'Please enter an answer!';
+    return;
+  }
+
+  if (validAnswers.includes(userAns)) {
+    appState.score++;
+    quizFeedback.textContent = '✅ Correct!';
+    correctMeaning.classList.add('hidden');
+  } else {
+    let displayedAnswer = flashcard.meaning;
+    if (Array.isArray(flashcard.synonyms) && flashcard.synonyms.length > 0) {
+      displayedAnswer = flashcard.synonyms.slice(0, 3).join(', ');
+
     }
-    submitBtn.classList.add('hidden');
+    quizFeedback.textContent = `❌ Incorrect! Correct: "${displayedAnswer}"`;
+    meaningText.textContent = flashcard.meaning;
+    correctMeaning.classList.remove('hidden');
+
+  }
+  
+  quizAnswer.disabled = true;
+  submitBtn.classList.add('hidden');
+
+  if (appState.quizIndex < appState.randomFlashcards.length - 1) {
     nextQBtn.classList.remove('hidden');
-  });
+  } else {
+    quizQuestion.textContent = 'Quiz Completed!';
+    quizScore.textContent = `Your Score: ${appState.score} / ${appState.randomFlashcards.length}`;
+    quizAnswer.classList.add('hidden');
+    nextQBtn.classList.add('hidden');
+  }
+});
+
 
   nextQBtn.addEventListener('click', () => {
     appState.quizIndex++;
     if (appState.quizIndex < appState.randomFlashcards.length) {
       displayQuizQuestion();
+      quizAnswer.disabled = false;
     } else {
       quizQuestion.textContent = 'Quiz Completed!';
       quizScore.textContent = `Your Score: ${appState.score} / ${appState.randomFlashcards.length}`;
+      quizAnswer.classList.add('hidden');
       submitBtn.classList.add('hidden');
       nextQBtn.classList.add('hidden');
     }
@@ -404,7 +465,12 @@ if (index !== -1) {
   console.log('Found flashcard at index:', index);
   console.log('Matched flashcard:', matchedFlashcard);
   appState.currentFlashcardIndex=index
-  flashcardWord.textContent = matchedFlashcard.word;
+  appState.showingDefinition = false;
+  displayFlashcard();
+  updateNavButtons();
+  searchInput.blur();
+  flashcardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
 } else {
   console.log('Flashcard not found.');
 }
