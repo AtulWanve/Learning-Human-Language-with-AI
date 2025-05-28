@@ -1,3 +1,4 @@
+/* style.css */
 :root {
     --bg-body: #f0f0f0;
     --text-primary: #333;
@@ -248,7 +249,7 @@ header nav {
 
 .nav-buttons {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     gap: var(--space-sm);
     margin-top: var(--space-md);
 }
@@ -416,8 +417,8 @@ input[type="text"],
 /* Saved Flashcards */
 #flashcard-list li {
     padding: var(--space-sm);
-    background-color: var(--search-results-item-bg); /* Light background color */
-    color: var(--text-primary);  /* Text color for light mode */
+    background-color: var(--search-results-item-bg);
+    color: var(--text-primary);
     border-radius: var(--radius);
     display: flex;
     justify-content: space-between;
@@ -426,8 +427,8 @@ input[type="text"],
 }
 
 .dark-mode #flashcard-list li {
-    background-color: #444; /* Dark background color for dark mode */
-    color: white; /* White text in dark mode */
+    background-color: #444; 
+    color: white; 
 }
 
 
@@ -452,6 +453,32 @@ input[type="text"],
     font-size: 1.125rem;
     color: var(--text-primary);
 }
+
+#correct-meaning {
+    margin-top: var(--space-md);
+    padding: var(--space-sm);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius);
+    background-color: var(--bg-section);
+    color: var(--text-primary);
+}
+
+#correct-meaning summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+#correct-meaning[open] summary {
+    color: var(--accent-hover);
+}
+
+#meaning-text {
+    margin-top: var(--space-sm);
+    font-style: italic;
+    color: var(--text-primary);
+}
+
 
 .quiz-controls {
     display: flex;
@@ -490,28 +517,28 @@ footer {
     }
 
     header.main-header {
-        padding: var(--space-xs) 0; /* Adjust vertical padding for small screens */
+        padding: var(--space-xs) 0; 
     }
 
     header .header-content {
-        flex-direction: column; /* Stack title and nav vertically */
-        align-items: flex-start; /* Align items to the left */
-        padding: 0 var(--space-sm); /* Adjust horizontal padding for small screens */
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0 var(--space-sm);
     }
 
     header .header-content h1 {
-        margin-bottom: var(--space-sm); /* Add space below the title */
+        margin-bottom: var(--space-sm); 
     }
 
     header nav {
-        flex-direction: column; /* Stack nav items vertically */
+        flex-direction: column; 
         align-items: flex-start;
         gap: var(--space-xs);
     }
 
     .search-label {
         margin-right: 0;
-        margin-bottom: var(--space-xxs); /* Add space below the search icon */
+        margin-bottom: var(--space-xxs);
     }
 
     /* Initial hidden state for the search input */
@@ -529,7 +556,7 @@ footer {
 
 /* Visible state when the search bar is toggled */
 .header-search-bar.open {
-    width: 200px; /* Adjust width based on design */
+    width: 200px;
     opacity: 1;
 }
 

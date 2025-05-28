@@ -2,6 +2,7 @@
 import requests
 import nltk
 from nltk.corpus import wordnet
+import logging
 
 try:
     wordnet.synsets("car")  # Check if WordNet is downloaded
@@ -24,8 +25,10 @@ def get_word_data_from_free_dict(word):
     try:
         response = requests.get(url)
         response.raise_for_status()  # Check for request errors
+        logger.info(f"Free Dictionary API response: {response.json()}")
         return response.json()
     except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching from Free Dictionary API: {e}")
         print(f"Error fetching from Free Dictionary API: {e}")
         return None
 
