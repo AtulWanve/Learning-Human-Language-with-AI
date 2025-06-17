@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET, require_http_methods
-from database.dictionary import get_word_data 
+from database.dictionary import lookup_word
 import json
 from bson import ObjectId
 import sys
@@ -233,26 +233,24 @@ def signup_user(request):
 
 
 @require_GET
-def lookup_word(request):
+def word_search(request):
     """API Endpoint: Retrieve word data such as definition, synonyms, and antonyms"""
     word = request.GET.get('word', '').strip()
+    logger.info(f"Received word lookup request for: {word}")
 
     if not word:
         return JsonResponse({'error': 'No word provided.'}, status=400)
 
     try:
-        word_info = get_word_data(word)
-        
+        word_info = lookup_word(word)
+        logger.info(f"Word info found: {word_info}")
+
         if not word_info:
             return JsonResponse({"error": "No information found for this word."}, status=404)
 
         return JsonResponse(word_info, status=200)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-    logger.info(f"Received word: {word}")
-    try:
-        word_info = get_word_data(word)
-        logger.info(f"Word info: {word_info}")
+
     except Exception as e:
         logger.error(f"Error fetching word data: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=500)
 
