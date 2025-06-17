@@ -3,6 +3,9 @@ import requests
 import nltk
 from nltk.corpus import wordnet
 import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
 
 try:
     wordnet.synsets("car")  # Check if WordNet is downloaded
@@ -20,10 +23,11 @@ FREE_DICT_API_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 DATAMUSE_API_URL = "https://api.datamuse.com/words"
 
 # Function to fetch word data from Free Dictionary API
-def get_word_data_from_free_dict(word):
+def fetch_freedict(word):
     url = f"{FREE_DICT_API_URL}{word}"
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=0.5)
+
         response.raise_for_status()  # Check for request errors
         logger.info(f"Free Dictionary API response: {response.json()}")
         return response.json()
@@ -33,10 +37,10 @@ def get_word_data_from_free_dict(word):
         return None
 
 # Function to fetch related words from Datamuse API
-def get_related_words_from_datamuse(word):
+def fetch_datamuse(word):
     url = f"{DATAMUSE_API_URL}?rel_syn={word}"
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=0.5)
         response.raise_for_status()  # Check for request errors
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -44,7 +48,7 @@ def get_related_words_from_datamuse(word):
         return []
 
 # Function to fetch word data from WordNet (NLTK)
-def get_word_data_from_wordnet(word):
+def get_wordnet(word):
     synsets = wordnet.synsets(word)
     word_data = {}
 
@@ -62,12 +66,12 @@ def get_word_data_from_wordnet(word):
     return word_data
 
 # Main function to get all word data (API first, then fallback to WordNet)
-def get_word_data(word):
+def lookup_word(word):
     # First try to fetch from Free Dictionary API
-    data = get_word_data_from_free_dict(word)
+    data = fetch_freedict(word)
 
     if not data:  # If Free Dictionary API fails, try Datamuse API for synonyms/related words
-        related_words = get_related_words_from_datamuse(word)
+        related_words = fetch_datamuse(word)
         synonyms = [item["word"] for item in related_words]
         antonyms = []  # Datamuse doesn’t give antonyms
         word_data = {"definition": "", "synonyms": synonyms, "antonyms": antonyms}
@@ -81,7 +85,7 @@ def get_word_data(word):
 
     # If no definition from APIs, try WordNet as fallback
     if not word_data.get("definition"):
-        word_data_wn = get_word_data_from_wordnet(word)
+        word_data_wn = get_wordnet(word)
         word_data["definition"] = word_data_wn.get("definition", "")
         if not word_data.get("synonyms"):
             word_data["synonyms"] = word_data_wn.get("synonyms", [])
@@ -93,7 +97,7 @@ def get_word_data(word):
 # Main logic to test the functions
 if __name__ == "__main__":
     search_word = input("Enter a word to search: ")
-    word_info = get_word_data(search_word)
+    word_info = lookup_word(search_word)
 
     if word_info:
         print(f"\nInformation for '{search_word}':")

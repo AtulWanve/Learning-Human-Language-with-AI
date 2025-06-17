@@ -10,5 +10,5 @@ urlpatterns = [
     path("search/", search_flashcards, name="search_flashcards"),
     path("login/", login_user, name="login_user"),
     path("signup/", signup_user, name="signup_user"),
-    path('lookup-word/', views.lookup_word, name='lookup_word'),
+    path('lookup-word/', views.word_search, name='lookup_word'),
 ]

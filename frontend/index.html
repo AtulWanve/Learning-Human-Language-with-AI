@@ -3,133 +3,76 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vocabulary Learning App</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vocabulary Learning App</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
 </head>
 
 <body>
-    <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+  <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
 
-    <header class="main-header">
-        <div class="header-content">
-            <h1>Vocabulary Learning App</h1>
-            <nav>
-                <div class="header-controls">
-                    <div class="search-wrapper">
-                        <label for="header-search-input" class="search-label" id="search-toggle">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 512 512">
-                                <path d="M460.355 421.59l-106.51-106.512c20.04-27.553 31.884-61.437 31.884-98.037C385.73 124.935 310.792 50 218.685 50c-92.106 0-167.04 74.934-167.04 167.04 0 92.107 74.935 167.042 167.04 167.042 34.912 0 67.352-10.773 94.184-29.158L419.945 462l40.41-40.41zM100.63 217.04c0-65.095 52.96-118.055 118.056-118.055 65.098 0 118.057 52.96 118.057 118.056 0 65.097-52.96 118.057-118.057 118.057-65.096 0-118.055-52.96-118.055-118.056z"></path>
-                            </svg>
-                        </label>
-                        <input type="search" id="header-search-input" class="header-search-bar" placeholder="Search..." aria-label="Search input" autocomplete="off" />
-                    </div>
-                    <button id="login-logout-button" class="nav-btn button-link" aria-label="Login/Logout">🔑 Login</button>
-                    <button id="toggle-dark-mode" class="toggle-btn" aria-label="Toggle dark mode">🌙</button>
-                </div>
-            </nav>
+  <header class="main-header">
+    <div class="header-content">
+      <h1>Vocabulary Learning App</h1>
+      <nav>
+        <div class="header-controls">
+          <button id="games-button" class="nav-btn button-link" aria-label="Games">Games</button>
+          <button id="dashboard-button" class="nav-btn button-link" aria-label="Dashboard">My Dashboard</button>
+          <button id="login-logout-button" class="nav-btn button-link" aria-label="Login/Logout">🔑 Login</button>
+          <button id="toggle-dark-mode" class="toggle-btn" aria-label="Toggle dark mode">🌙</button>
         </div>
-    </header>
-
-    <main class="container">
-        <section id="flashcard-section">
-            <h2>Flashcards</h2>
-            <div id="flashcard-container">
-                <div id="flashcard" class="flashcard" data-id="">
-                    <div class="flashcard-item">
-                        <strong>Word:</strong> <span id="flashcard-word" class="flashcard-text">Word will appear here</span>
-                    </div>
-                    <div class="flashcard-item">
-                        <strong>Meaning:</strong> <span id="flashcard-meaning" class="flashcard-text">Meaning will appear here</span>
-                    </div>
-                    <div class="flashcard-item">
-                        <strong>Example:</strong> <span id="flashcard-example" class="flashcard-text">Example sentence will appear here</span>
-                    </div>
-                    <div class="flashcard-item">
-                        <strong>Synonyms:</strong> <span id="flashcard-synonyms" class="flashcard-text">N/A</span>
-                    </div>
-                    <div class="flashcard-item">
-                        <strong>Antonyms:</strong> <span id="flashcard-antonyms" class="flashcard-text">N/A</span>
-                    </div>
-                </div>
-                <div id="flashcard-controls" class="nav-buttons">
-                    <button id="prev-flashcard" class="nav-btn" disabled>⬅ Previous</button>
-                    <button id="shuffle-flashcards" class="nav-btn">🔀 Shuffle</button>
-                    <button id="next-flashcard" class="nav-btn" disabled>Next ➡</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="add-flashcard-section">
-            <h2>Add a Flashcard</h2>
-            <form id="flashcard-form">
-                <div class="form-group">
-                    <label for="word">Word:</label>
-                    <input type="text" id="word" placeholder="Word" required />
-                </div>
-
-                <div class="form-group">
-                    <label for="meaning">Meaning:</label>
-                    <input type="text" id="meaning" placeholder="Meaning" required />
-                </div>
-
-                <div class="form-group">
-                    <label for="example_sentence">Example Sentence:</label>
-                    <input type="text" id="example_sentence" placeholder="Example Sentence" />
-                </div>
-
-                <div class="form-group">
-                    <label for="synonyms">Synonyms (comma-separated):</label>
-                    <input type="text" id="synonyms" placeholder="Synonyms (comma-separated)" />
-                </div>
-
-                <div class="form-group">
-                    <label for="antonyms">Antonyms (comma-separated):</label>
-                    <input type="text" id="antonyms" placeholder="Antonyms (comma-separated)" />
-                </div>
-
-                <button type="submit" class="nav-btn">Add Flashcard</button>
-                <p id="add-flashcard-message" class="feedback-message hidden"></p>
-            </form>
-        </section>
-
-        <section id="saved-flashcards-section">
-            <h2>My Flashcards</h2>
-            <button id="toggle-saved-flashcards" class="toggle-btn">Show My Flashcards</button>
-            <ul id="flashcard-list" class="flashcard-list hidden"></ul>
-            <p id="saved-flashcards-message" class="hidden">No flashcards saved yet.</p>
-        </section>
-
-        <section id="quiz-section">
-    <h2>Quiz</h2>
-    <p id="quiz-question">Question will appear here</p>
-    <input type="text" id="quiz-answer" placeholder="Type your answer..." />
-    <div class="quiz-controls">
-        <button id="submit-answer" class="nav-btn">Submit</button>
-        <button id="next-question" class="nav-btn hidden">Next Question</button>
+      </nav>
     </div>
-    
-    <div id="quiz-result">
-        <p id="quiz-feedback"></p>
-        <details id="correct-meaning" class="hidden">
-            <summary>Show Meaning</summary>
-	    <p id="meaning-text"></p>
-        </details>
-    </div>
+  </header>
 
-    <p id="quiz-score">Score: 0</p>
-    <button id="start-quiz" class="nav-btn">Start Quiz</button>
-</section>
+  <main class="container">
+    <!-- Search Section -->
+    <section id="search-section">
+      <div class="search-wrapper">
+        <input type="search" id="search-input" class="search-bar" placeholder="Search..." aria-label="Search input" autocomplete="off" />
+        <button id="search-button" class="search-icon-button" aria-label="Search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 512 512">
+            <path d="M460.355 421.59l-106.51-106.512c20.04-27.553 31.884-61.437 31.884-98.037C385.73 124.935 310.792 50 218.685 50c-92.106 0-167.04 74.934-167.04 167.04 0 92.107 74.935 167.042 167.04 167.042 34.912 0 67.352-10.773 94.184-29.158L419.945 462l40.41-40.41zM100.63 217.04c0-65.095 52.96-118.055 118.056-118.055 65.098 0 118.057 52.96 118.057 118.056 0 65.097-52.96 118.057-118.057 118.057-65.096 0-118.055-52.96-118.055-118.056z"></path>
+          </svg>
+        </button>
+      </div>
+    </section>
 
-    </main>
+    <!-- Results Section -->
+    <section id="results" class="results" aria-live="polite" aria-atomic="true">
+      <h3 id="word"></h3>
+      <p><strong>Meaning:</strong> <span id="meaning">N/A</span></p>
+      <p><strong>Example:</strong> <span id="example">N/A</span></p>
+      <p><strong>Synonyms:</strong> <span id="synonyms">N/A</span></p>
+      <p><strong>Antonyms:</strong> <span id="antonyms">N/A</span></p>
+    </section>
 
-    <footer>
-        <p>&copy; 2025 Vocabulary Learning App</p>
-    </footer>
+    <!-- Extra Section: Word of the Day, This Day in Language, Phrase of the Day -->
+    <section id="extra-section" class="extra-section">
+      <div class="left-side">
+        <h3>Word of the Day</h3>
+        <p id="word-of-day">Loading...</p>
+      </div>
+      <div class="middle-side">
+        <h3>This Day in Language</h3>
+        <p id="language-history">Coming soon...</p>
+      </div>
+      <div class="right-side">
+        <h3>Phrase of the Day</h3>
+        <p id="phrase-of-day">Coming soon...</p>
+      </div>
+    </section>
 
-    <script src="script.js"></script>
+
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Vocabulary Learning App</p>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 
 </html>
