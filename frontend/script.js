@@ -1,4 +1,18 @@
+// script.js
 document.addEventListener('DOMContentLoaded', () => {
+  const API_URL = 'http://127.0.0.1:8000/api';
+
+  const API = {
+    lookupWord: (word) =>
+      fetch(`${API_URL}/lookup-word/?word=${encodeURIComponent(word)}`),
+
+    aiLookupWord: (word) =>
+      fetch(`${API_URL}/lookup-word/ai/?word=${encodeURIComponent(word)}`),
+
+    getDailyContent: () =>
+      fetch(`${API_URL}/daily-content/`),
+  };
+
   // Utility to get element by id
   const get = (id) => document.getElementById(id);
 
@@ -9,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchBtn = get('search-button');
   const gamesBtn = get('games-button');
   const dashboardBtn = get('dashboard-button');
-
 
 
   // Theme CSS variables for light/dark mode
@@ -46,13 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (gamesBtn) {
   gamesBtn.addEventListener('click', () => {
-    window.location.href = 'games.html'; // change to your actual games page URL
+    window.location.href = 'games.html';
   });
 }
 
 if (dashboardBtn) {
   dashboardBtn.addEventListener('click', () => {
-    window.location.href = 'dashboard.html'; // change to your actual dashboard page URL
+    window.location.href = 'dashboard.html';
   });
 }
 
@@ -87,13 +100,26 @@ if (dashboardBtn) {
     loginBtn.textContent = token ? '🔓 Logout' : '🔑 Login';
   };
 
+  // Toggle visibility of "My Dashboard" based on login status
+  const updateDashboardVisibility = () => {
+    const token = localStorage.getItem('auth_token');
+    if (dashboardBtn) {
+      dashboardBtn.style.display = token ? 'inline-block' : 'none';
+    }
+  };
+
+  function updateAuthUI() {
+    updateLoginButtonText();
+    updateDashboardVisibility();
+  }
+
   // Toggle login/logout functionality
   function toggleLoginStatus() {
     const token = localStorage.getItem('auth_token');
     if (token) {
       // Logout
       localStorage.removeItem('auth_token');
-      updateLoginButtonText();
+      updateAuthUI();
       window.location.reload();
     } else {
       // Redirect to login page
@@ -121,54 +147,89 @@ if (dashboardBtn) {
   // Search button toggles input focus (or triggers search if input visible)
   if (searchBtn && searchInput) {
     searchBtn.addEventListener('click', async () => {
-      // If search input is hidden, show and focus it
-      if (searchInput.classList.contains('hidden')) {
-        searchInput.classList.remove('hidden');
-        searchInput.focus();
-        return;
-      }
-
-      // If input visible, trigger search
       const query = searchInput.value.trim();
       if (!query) return;
 
+      const lookupMode = document.querySelector('input[name="lookup-mode"]:checked')?.value || 'traditional';
+      const apiCall = lookupMode === 'ai' ? API.aiLookupWord : API.lookupWord;
+
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/lookup-word?word=${encodeURIComponent(query)}`);
+        const response = await apiCall(query);
         const data = await response.json();
-        displayWordInfo(data);
+        displayWordInfo(data, query);
       } catch (error) {
         displayWordInfo({ error: 'Failed to fetch word info.' });
       }
     });
   }
 
+  if (searchInput) {
+  searchInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      searchBtn.click();
+    }
+  });
+}
+
+
   // Function to display word info or error messages
-  function displayWordInfo(data) {
+  function displayWordInfo(data, query) {
     const wordEl = get('word');
     const meaningEl = get('meaning');
     const exampleEl = get('example');
     const synonymsEl = get('synonyms');
     const antonymsEl = get('antonyms');
+    const resultsSection = get('results');
 
     if (!wordEl || !meaningEl || !exampleEl || !synonymsEl || !antonymsEl) return;
 
     if (data.error) {
-      wordEl.textContent = '';
-      meaningEl.textContent = data.error;
-      exampleEl.textContent = '';
-      synonymsEl.textContent = '';
-      antonymsEl.textContent = '';
+      resultsSection.classList.add('hidden')
+      wordEl.textContent = query || '';
+      meaningEl.textContent = "No meaning available.";
+      exampleEl.textContent = "Example not found.";
+      synonymsEl.textContent = "Synonyms not found.";
+      antonymsEl.textContent = "Antonyms not found.";
       return;
     }
 
-    wordEl.textContent = data.word || '';
-    meaningEl.textContent = data.definition || 'N/A';
-    exampleEl.textContent = data.example_sentence || 'N/A';
-    synonymsEl.textContent = (data.synonyms && data.synonyms.length > 0) ? data.synonyms.join(', ') : 'N/A';
-    antonymsEl.textContent = (data.antonyms && data.antonyms.length > 0) ? data.antonyms.join(', ') : 'N/A';
+    resultsSection.classList.remove('hidden');
+    wordEl.textContent = query || '';
+    meaningEl.textContent = data.meaning?.trim() || "No meaning available.";
+    exampleEl.textContent = data.example_sentence?.trim() || "Example not found.";
+    synonymsEl.textContent = (data.synonyms && data.synonyms.length > 0) ? data.synonyms.join(', ') : "Synonyms not found.";
+    antonymsEl.textContent = (data.antonyms && data.antonyms.length > 0) ? data.antonyms.join(', ') : "Antonyms not found.";
   }
+
+  API.getDailyContent()
+  .then(res => res.json())
+  .then(data => {
+    const word = data.word_of_the_day?.word || "N/A";
+    const meaning = data.word_of_the_day?.meaning || "N/A";
+    const phrase = data.phrase_of_the_day?.phrase || "N/A";
+    const phraseMeaning = data.phrase_of_the_day?.meaning || "N/A";
+    const langHistory = data.this_day_in_language || "N/A";
+
+    get('wod-word').textContent = word;
+    get('wod-meaning').textContent = meaning;
+    get('wod-example').textContent = data.word_of_the_day?.example || "N/A";
+
+    get('pod-phrase').textContent = phrase;
+    get('pod-meaning').textContent = phraseMeaning;
+    get('pod-example').textContent = data.phrase_of_the_day?.example || "N/A";
+
+    get('language-history').textContent = langHistory;
+
+  })
+  .catch(err => {
+    console.error("Error loading daily content:", err);
+    document.getElementById('word-of-day').textContent = "N/A";
+    document.getElementById('phrase-of-day').textContent = "N/A";
+    document.getElementById('language-history').textContent = "N/A";
+  });
 
   // Initial theme and login button text setup
   applyTheme();
-  updateLoginButtonText();
+  updateAuthUI();
 });

@@ -80,31 +80,30 @@ const loginData = {
             headers: {
                 "Content-Type": "application/json",
             },
+            credentials: "include", 
             body: JSON.stringify(loginData),
         })
         
         .then(response => response.json())
 .then(data => {
-    console.log("Backend response:", data);  // Log the entire response for debugging
-    
-    if (data.token) {
-        // Successful login, store the token
+    if (data.message === "Login successful!") {
         localStorage.setItem("auth_token", data.token);
-        // Redirects to your main flashcard page
-        window.location.href = "index.html"; 
-
+        localStorage.setItem("user_id", data.user_id);
+        localStorage.setItem("username", data.username);
+        window.location.href = "index.html";
     } else {
-        // Show error message
-        document.getElementById("login-error-message").textContent = data.error || "Login failed!";
-        document.getElementById("login-error-message").classList.remove("hidden");        
+        const errorBox = document.getElementById("login-error-message");
+        errorBox.textContent = data.error || "Invalid login. Please check your username/email and password.";
+        errorBox.classList.remove("hidden");
     }
 })
 
-    .catch(error => {
-        console.error("Error during login:", error);
-        document.getElementById("login-error-message").textContent = "An unexpected error occurred.";
-        document.getElementById("login-error-message").classList.remove("hidden"); // Show the error message
-    });
+    .catch(() => {
+    const errorBox = document.getElementById("login-error-message");
+    errorBox.textContent = "Could not connect to the server. Please try again later.";
+    errorBox.classList.remove("hidden");
+});
+
 });
    // Handle signup form submission
 signupForm.addEventListener("submit", function (event) {
@@ -126,10 +125,11 @@ signupForm.addEventListener("submit", function (event) {
         headers: {
             "Content-Type": "application/json"
         },
+        credentials: "include", 
         body: JSON.stringify(signupData),
     })
     .then(response => {
-        console.log("Response Status:", response.status);  // Log status code
+        console.log("Response Status:", response.status);
         return response.json();
     })
     .then(data => {

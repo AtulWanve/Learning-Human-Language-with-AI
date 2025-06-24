@@ -67,30 +67,38 @@
             <form id="flashcard-form">
                 <div class="form-group">
                     <label for="word">Word:</label>
-                    <input type="text" id="word" placeholder="Word" required />
+                    <input type="text" id="word" placeholder="Enter a word..." required />
                 </div>
 
-                <div class="form-group">
-                    <label for="meaning">Meaning:</label>
-                    <input type="text" id="meaning" placeholder="Meaning" required />
+                <div class="form-group" id="flashcard-options">
+                    <button type="button" id="manual-fill-btn" class="nav-btn">Manual</button>
+                    <button type="button" id="ai-fill-btn" class="nav-btn">Use AI</button>
                 </div>
+                
+                <div id="additional-fields" class="hidden">
+                    <div class="form-group">
+                        <label for="meaning">Meaning:</label>
+                        <input type="text" id="meaning" placeholder="Meaning" required />
+                    </div>
 
-                <div class="form-group">
-                    <label for="example_sentence">Example Sentence:</label>
-                    <input type="text" id="example_sentence" placeholder="Example Sentence" />
+                    <div class="form-group">
+                        <label for="example_sentence">Example Sentence:</label>
+                        <input type="text" id="example_sentence" placeholder="Example Sentence" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="synonyms">Synonyms (comma-separated):</label>
+                        <input type="text" id="synonyms" placeholder="Synonyms (comma-separated)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="antonyms">Antonyms (comma-separated):</label>
+                        <input type="text" id="antonyms" placeholder="Antonyms (comma-separated)" />
+                    </div>
+
+                    <button type="submit" class="nav-btn">Add Flashcard</button>
+                    <button type="button" id="fill-with-ai-btn" class="nav-btn">Fill with AI</button>
                 </div>
-
-                <div class="form-group">
-                    <label for="synonyms">Synonyms (comma-separated):</label>
-                    <input type="text" id="synonyms" placeholder="Synonyms (comma-separated)" />
-                </div>
-
-                <div class="form-group">
-                    <label for="antonyms">Antonyms (comma-separated):</label>
-                    <input type="text" id="antonyms" placeholder="Antonyms (comma-separated)" />
-                </div>
-
-                <button type="submit" class="nav-btn">Add Flashcard</button>
                 <p id="add-flashcard-message" class="feedback-message hidden"></p>
             </form>
         </section>

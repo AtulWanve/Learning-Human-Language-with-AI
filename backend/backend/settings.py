@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-z$z_1wxrtk%3g@p%s^y=@#1pnhq_i7j#imq8+mn@b7se#@o-*h'
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# SECURITY WARNING!
 DEBUG = True
 
 ALLOWED_HOSTS = []
@@ -123,9 +123,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins in development
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:3000",  # Allow frontend (adjust port if needed)
+    "http://127.0.0.1:3000",
     "http://localhost:3000",
 ]
 
