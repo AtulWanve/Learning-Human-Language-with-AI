@@ -3,7 +3,7 @@ import os
 import google.generativeai as genai
 from datetime import datetime
 
-genai.configure(api_key = "AIzaSyBovxapOhPitn1sur0OBryGSLgBPbaApgI")
+genai.configure(api_key = "")
 
 def get_available_model():
     preferred_models = ["gemini-1.5-flash", "gemini-1.5-pro"]
