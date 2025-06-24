@@ -29,42 +29,88 @@
 
   <main class="container">
     <!-- Search Section -->
-    <section id="search-section">
+    <section id="search-section" role="search">
       <div class="search-wrapper">
-        <input type="search" id="search-input" class="search-bar" placeholder="Search..." aria-label="Search input" autocomplete="off" />
-        <button id="search-button" class="search-icon-button" aria-label="Search">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 512 512">
-            <path d="M460.355 421.59l-106.51-106.512c20.04-27.553 31.884-61.437 31.884-98.037C385.73 124.935 310.792 50 218.685 50c-92.106 0-167.04 74.934-167.04 167.04 0 92.107 74.935 167.042 167.04 167.042 34.912 0 67.352-10.773 94.184-29.158L419.945 462l40.41-40.41zM100.63 217.04c0-65.095 52.96-118.055 118.056-118.055 65.098 0 118.057 52.96 118.057 118.056 0 65.097-52.96 118.057-118.057 118.057-65.096 0-118.055-52.96-118.055-118.056z"></path>
-          </svg>
-        </button>
+        <div class="search-group">
+          <div class="lookup-toggle">
+            <label class="toggle-option">
+              <input type="radio" name="lookup-mode" value="traditional" checked />
+              <span>Dictionary</span>
+            </label>
+            <label class="toggle-option">
+              <input type="radio" name="lookup-mode" value="ai" />
+              <span>AI Lookup</span>
+            </label>
+          </div>
+          <input type="search" id="search-input" class="search-bar" placeholder="Search..." aria-label="Search input" autocomplete="off" />
+          <button id="search-button" class="search-icon-button" aria-label="Search">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+              <path d="M460.355 421.59l-106.51-106.512c20.04-27.553 31.884-61.437 31.884-98.037C385.73 124.935 310.792 50 218.685 50c-92.106 0-167.04 74.934-167.04 167.04 0 92.107 74.935 167.042 167.04 167.042 34.912 0 67.352-10.773 94.184-29.158L419.945 462l40.41-40.41zM100.63 217.04c0-65.095 52.96-118.055 118.056-118.055 65.098 0 118.057 52.96 118.057 118.056 0 65.097-52.96 118.057-118.057 118.057-65.096 0-118.055-52.96-118.055-118.056z"></path>
+            </svg>
+          </button>
+        </div>
       </div>
     </section>
 
     <!-- Results Section -->
-    <section id="results" class="results" aria-live="polite" aria-atomic="true">
-      <h3 id="word"></h3>
-      <p><strong>Meaning:</strong> <span id="meaning">N/A</span></p>
-      <p><strong>Example:</strong> <span id="example">N/A</span></p>
-      <p><strong>Synonyms:</strong> <span id="synonyms">N/A</span></p>
-      <p><strong>Antonyms:</strong> <span id="antonyms">N/A</span></p>
+    <section id="results" class="results hidden">
+      <div class="result-block">
+        <h4>Word</h4>
+        <p id="word">N/A</p>
+      </div>
+      <div class="result-block">
+        <h4>Meaning</h4>
+        <p id="meaning">N/A</p>
+      </div>
+      <div class="result-block">
+        <h4>Example</h4>
+        <p id="example">N/A</p>
+      </div>
+      <div class="result-block">
+        <h4>Synonyms</h4>
+        <p id="synonyms">N/A</p>
+      </div>
+      <div class="result-block">
+        <h4>Antonyms</h4>
+        <p id="antonyms">N/A</p>
+      </div>
     </section>
 
     <!-- Extra Section: Word of the Day, This Day in Language, Phrase of the Day -->
     <section id="extra-section" class="extra-section">
       <div class="left-side">
         <h3>Word of the Day</h3>
-        <p id="word-of-day">Loading...</p>
+        <div id="word-of-day">
+          <div class="wod-line">
+            <span class="word-title" id="wod-word">Word</span>:
+          </div>
+          <div class="wod-line" id="wod-meaning">Meaning</div>
+          <div class="wod-line">
+            <span class="example-label">Example:</span>
+          </div>
+          <div class="wod-line" id="wod-example">Example sentence</div>
+        </div>
       </div>
+
       <div class="middle-side">
         <h3>This Day in Language</h3>
-        <p id="language-history">Coming soon...</p>
+        <div id="language-history">Loading...</div>
       </div>
+      
       <div class="right-side">
         <h3>Phrase of the Day</h3>
-        <p id="phrase-of-day">Coming soon...</p>
+        <div id="phrase-of-day">
+          <div class="wod-line">
+            <span class="word-title" id="pod-phrase">Loading...</span>:
+          </div>
+          <div class="wod-line" id="pod-meaning">...</div>
+          <div class="wod-line">
+            <span class="example-label">Example:</span>
+          </div>
+          <div class="wod-line" id="pod-example">...</div>
+        </div>
       </div>
     </section>
-
 
   </main>
 

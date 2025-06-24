@@ -40,7 +40,7 @@ def fetch_freedict(word):
 def fetch_datamuse(word):
     url = f"{DATAMUSE_API_URL}?rel_syn={word}"
     try:
-        response = requests.get(url, timeout=0.5)
+        response = requests.get(url, timeout=1.5)
         response.raise_for_status()  # Check for request errors
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -55,12 +55,8 @@ def get_wordnet(word):
     if synsets:
         # Extract first synset's definition, synonyms, and antonyms
         first_synset = synsets[0]
-        word_data["definition"] = first_synset.definition()
-
-        # Extract all synonyms for the given synset
+        word_data["meaning"] = first_synset.definition()
         word_data["synonyms"] = [lem.name() for lem in first_synset.lemmas()]
-
-        # Extract antonyms for the given synset
         word_data["antonyms"] = [ant.name() for lem in first_synset.lemmas() for ant in lem.antonyms()]
 
     return word_data
@@ -74,19 +70,21 @@ def lookup_word(word):
         related_words = fetch_datamuse(word)
         synonyms = [item["word"] for item in related_words]
         antonyms = []  # Datamuse doesn’t give antonyms
-        word_data = {"definition": "", "synonyms": synonyms, "antonyms": antonyms}
+        word_data = {"meaning": "", "example_sentence": "", "synonyms": synonyms, "antonyms": antonyms}
     else:
         # Otherwise, extract the necessary fields from the Free Dictionary API
         word_data = {
-            "definition": data[0].get("meanings", [{}])[0].get("definitions", [{}])[0].get("definition", ""),
+            "meaning": data[0].get("meanings", [{}])[0].get("definitions", [{}])[0].get("definition", ""),
+            "example_sentence": data[0].get("meanings", [{}])[0].get("definitions", [{}])[0].get("example", ""),
             "synonyms": data[0].get("meanings", [{}])[0].get("synonyms", []),
             "antonyms": data[0].get("meanings", [{}])[0].get("antonyms", []),
         }
 
+
     # If no definition from APIs, try WordNet as fallback
-    if not word_data.get("definition"):
+    if not word_data.get("meaning"):
         word_data_wn = get_wordnet(word)
-        word_data["definition"] = word_data_wn.get("definition", "")
+        word_data["meaning"] = word_data_wn.get("meaning", "")
         if not word_data.get("synonyms"):
             word_data["synonyms"] = word_data_wn.get("synonyms", [])
         if not word_data.get("antonyms"):
@@ -101,8 +99,10 @@ if __name__ == "__main__":
 
     if word_info:
         print(f"\nInformation for '{search_word}':")
-        if word_info.get("definition"):
-            print(f"Definition: {word_info['definition']}")
+        if word_info.get("meaning"):
+            print(f"Meaning: {word_info['meaning']}")
+        if word_info.get("example_sentence"):
+            print(f"Example: {word_info['example_sentence']}")
         if word_info.get("synonyms"):
             print(f"Synonyms: {', '.join(word_info['synonyms'])}")
         if word_info.get("antonyms"):

@@ -11,3 +11,4 @@ db = client[DB_NAME]
 # Collections (Tables in SQL terms)
 flashcards_collection = db["flashcards"]  # Collection for storing flashcards
 users_collection = db["users"]  # Collection for storing user data
+daily_content_collection = db["daily_content"]  # Collection for daily AI-generated content

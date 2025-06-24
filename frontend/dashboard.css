@@ -354,6 +354,13 @@ input[type="text"],
     align-items: center;
 }
 
+#flashcard-options {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
 #loading-spinner {
     font-size: 1.25rem;
     text-align: center;

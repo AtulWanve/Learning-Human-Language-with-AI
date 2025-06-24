@@ -1,5 +1,10 @@
 // dashboard.js
 document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('auth_token');
+  if (!token) {
+    window.location.href = 'index.html';
+    return;
+  }
   const appState = {
     flashcards: [],
     currentFlashcardIndex: 0,
@@ -11,6 +16,75 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const API_URL = 'http://127.0.0.1:8000/api';
+
+  const API = {
+  login: (data) =>
+    fetch(`${API_URL}/login/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    }),
+
+  signup: (data) =>
+    fetch(`${API_URL}/signup/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    }),
+
+  getFlashcards: () => {
+    const token = localStorage.getItem("auth_token");
+    return fetch(`${API_URL}/all/`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Token ${token}`,
+      },
+    });
+  },
+
+
+  addFlashcard: (data) => {
+    const token = localStorage.getItem("auth_token");
+    return fetch(`${API_URL}/add/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Token ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteFlashcard: (id) => {
+    const token = localStorage.getItem("auth_token");
+    return fetch(`${API_URL}/delete/`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Token ${token}`,
+      },
+      body: JSON.stringify({ id }),
+    });
+  },
+  
+  aiLookup: (word) => {
+  const token = localStorage.getItem("auth_token");
+  return fetch(`${API_URL}/lookup-word/ai/?word=${encodeURIComponent(word)}`, {
+    headers: {
+      "Authorization": `Token ${token}`,
+    },
+  });
+},
+
+
+
+  searchFlashcards: (query) =>
+    fetch(`${API_URL}/search/?query=${encodeURIComponent(query)}`),
+
+};
+
 
   const get = (id) => document.getElementById(id);
 
@@ -46,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginBtn = get("login-logout-button");
   const correctMeaning = get('correct-meaning');
   const meaningText = get('meaning-text');
+  const flashcardOptions = get('flashcard-options');
 
 
   quizQuestion.classList.add('hidden');
@@ -100,20 +175,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-function applyTheme() {
-  // 1. mark “no saved preference” on <html> if nothing in localStorage
-  if (!localStorage.getItem('theme')) {
-    document.documentElement.classList.add('no-theme');
-  } else {
-    document.documentElement.classList.remove('no-theme');
-  }
-
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+function getPreferredTheme() {
   const saved = localStorage.getItem('theme');
-  const dark = saved ? saved === 'dark' : prefersDark;
+  if (saved) return saved;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
 
-  document.body.classList.toggle('dark-mode', dark);
-  applyCSSVars(dark ? darkVars : lightVars);
+function applyTheme() {
+  const theme = getPreferredTheme();
+  document.body.classList.toggle('dark-mode', theme === 'dark');
+  applyCSSVars(theme === 'dark' ? darkVars : lightVars);
+}
+
+function toggleDarkMode() {
+  const current = getPreferredTheme();
+  const newTheme = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('theme', newTheme);
+  applyTheme();
 }
 
 
@@ -123,17 +201,123 @@ function updateLoginUI() {
   
 }
 
+const manualBtn = get('manual-fill-btn');
+const additionalFields = get('additional-fields');
+
+if (manualBtn) {
+  manualBtn.addEventListener('click', () => {
+    form.classList.remove('hidden');
+    form.style.display = 'block';
+
+    if (additionalFields) {
+      additionalFields.classList.remove('hidden');
+      additionalFields.style.display = 'block';
+    }
+    if (flashcardOptions) {
+      flashcardOptions.style.display = 'none';
+    }
+
+    wordInput.focus();
+  });
+}
+
+const useAiBtn = get('ai-fill-btn');
+if (useAiBtn) {
+  useAiBtn.addEventListener('click', async () => {
+    const word = wordInput.value.trim();
+    if (!word) {
+      alert("Please enter a word first!");
+      return;
+    }
+
+    useAiBtn.disabled = true;
+    useAiBtn.textContent = "⏳ Loading...";
+
+    try {
+      const res = await API.aiLookup(word);
+      const data = await res.json();
+
+      if (res.ok && data.meaning) {
+        // Show form if it's not visible
+        form.classList.remove('hidden');
+        form.style.display = 'block';
+
+        if (additionalFields) {
+          additionalFields.classList.remove('hidden');
+          additionalFields.style.display = 'block';
+        }
+
+        // Fill the values
+        meaningInput.value = data.meaning || '';
+        exampleInput.value = data.example_sentence || '';
+        synonymsInput.value = (data.synonyms || []).join(', ');
+        antonymsInput.value = (data.antonyms || []).join(', ');
+        if (flashcardOptions) {
+          flashcardOptions.style.display = 'none';
+          flashcardOptions.classList.add('hidden')
+        }
+
+      } else {
+        alert(data.error || 'Could not generate flashcard using AI.');
+      }
+    } catch (err) {
+      console.error("AI Lookup Error:", err);
+      alert("Error generating flashcard using AI.");
+    } finally {
+      useAiBtn.disabled = false;
+      useAiBtn.textContent = "Use AI";
+    }
+  });
+}
+
+
+const fillWithAiBtn = get('fill-with-ai-btn');
+if (fillWithAiBtn) {
+  fillWithAiBtn.addEventListener('click', async () => {
+    const word = wordInput.value.trim();
+    if (!word) {
+      alert("Please enter a word first!");
+      return;
+    }
+
+    fillWithAiBtn.disabled = true;
+    fillWithAiBtn.textContent = "⏳ Loading...";
+
+    try {
+      const res = await API.aiLookup(word);
+      const data = await res.json();
+
+      if (res.ok && data.meaning) {
+        meaningInput.value = data.meaning || '';
+        exampleInput.value = data.example_sentence || '';
+        synonymsInput.value = (data.synonyms || []).join(', ');
+        antonymsInput.value = (data.antonyms || []).join(', ');
+      } else {
+        alert(data.error || 'Could not generate flashcard using AI.');
+      }
+    } catch (err) {
+      console.error("AI Lookup Error:", err);
+      alert("Error generating flashcard using AI.");
+    } finally {
+      fillWithAiBtn.disabled = false;
+      fillWithAiBtn.textContent = "Fill with AI";
+    }
+  });
+}
+
+
+
 
 // Toggle login status function
 function toggleLoginStatus() {
   const token = localStorage.getItem('auth_token');
 
   if (token) {
-    localStorage.removeItem('auth_token'); // Remove token (logout)
+    localStorage.removeItem('auth_token');
     console.log('Logged out. Token removed.');
-    updateLoginButtonText(); // Update button text after logout
+    updateLoginButtonText();
     updateLoginUI();
-    window.location.reload();
+    window.location.href = 'index.html';
   } else {
     console.log('Already logged out, redirecting to login page.');
     updateLoginButtonText();
@@ -141,7 +325,6 @@ function toggleLoginStatus() {
     window.location.href = 'login.html';
   }
 }
-
 
 // Login Button Setup 
 if (loginBtn) {
@@ -151,22 +334,12 @@ if (loginBtn) {
   console.error('Login button not found!');
 }
   
-  function toggleDarkMode() {
-    const dark = document.body.classList.toggle('dark-mode');
-    localStorage.setItem('theme', dark ? 'dark' : 'light');
-    applyCSSVars(dark ? darkVars : lightVars);
-  
-    console.log('toggleDarkMode -> new mode:', dark ? 'dark' : 'light');
-    console.log('toggleDarkMode -> stored in localStorage:', localStorage.getItem('theme'));
-  }
-  
   toggleDarkBtn.addEventListener('click', toggleDarkMode);
   applyTheme();
   updateLoginButtonText();
   updateLoginUI();
 
   // Check login state on page load
-  const token = localStorage.getItem('auth_token'); // Changed to 'auth_token'
   if (token) {
     // User is "logged in"
     loginBtn.textContent = '🔓 Logout';
@@ -192,7 +365,8 @@ if (loginBtn) {
 
   async function fetchFlashcards() {
     try {
-      const res = await fetch(`${API_URL}/all/`);
+      const res = await API.getFlashcards();
+
       const data = await res.json();
       appState.flashcards = data.flashcards || [];
       appState.currentFlashcardIndex = 0;
@@ -268,6 +442,7 @@ if (loginBtn) {
       return;
     }
     savedMessage.classList.add('hidden');
+    appState.flashcards.sort((a, b) => a.word.localeCompare(b.word));
     appState.flashcards.forEach(fc => {
       const li = document.createElement('li');
       li.innerHTML = `<strong>${fc.word}:</strong> ${fc.meaning || 'N/A'}`;
@@ -283,14 +458,7 @@ if (loginBtn) {
   async function deleteFlashcard(id) {
     if (!confirm('Delete this flashcard?')) return;
     try {
-      const res = await fetch(`${API_URL}/delete/`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCSRFToken()
-        },
-        body: JSON.stringify({ id })
-      });
+      const res = await API.deleteFlashcard(id);
       if (!res.ok) throw await res.json();
       appState.flashcards = appState.flashcards.filter(f => f._id !== id);
       updateFlashcardList();
@@ -316,14 +484,14 @@ if (loginBtn) {
     }
 
     try {
-      const res = await fetch(`${API_URL}/add/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCSRFToken()
-        },
-        body: JSON.stringify({ word, meaning, example_sentence: example, synonyms, antonyms })
+      const res = await API.addFlashcard({
+        word,
+        meaning,
+        example_sentence: example,
+        synonyms,
+        antonyms
       });
+
       const result = await res.json();
       if (!res.ok) throw result;
       addMessage.textContent = 'Flashcard added successfully!';
@@ -368,6 +536,14 @@ if (loginBtn) {
 
   }
 
+  function completeQuiz() {
+    quizQuestion.textContent = 'Quiz Completed!';
+    quizScore.textContent = `Your Score: ${appState.score} / ${appState.randomFlashcards.length}`;
+    quizAnswer.classList.add('hidden');
+    submitBtn.classList.add('hidden');
+    nextQBtn.classList.add('hidden');
+  }
+
   submitBtn.addEventListener('click', () => {
   const flashcard = appState.randomFlashcards[appState.quizIndex];
 
@@ -410,10 +586,7 @@ if (loginBtn) {
   if (appState.quizIndex < appState.randomFlashcards.length - 1) {
     nextQBtn.classList.remove('hidden');
   } else {
-    quizQuestion.textContent = 'Quiz Completed!';
-    quizScore.textContent = `Your Score: ${appState.score} / ${appState.randomFlashcards.length}`;
-    quizAnswer.classList.add('hidden');
-    nextQBtn.classList.add('hidden');
+    completeQuiz();
   }
 });
 
@@ -424,11 +597,7 @@ if (loginBtn) {
       displayQuizQuestion();
       quizAnswer.disabled = false;
     } else {
-      quizQuestion.textContent = 'Quiz Completed!';
-      quizScore.textContent = `Your Score: ${appState.score} / ${appState.randomFlashcards.length}`;
-      quizAnswer.classList.add('hidden');
-      submitBtn.classList.add('hidden');
-      nextQBtn.classList.add('hidden');
+      completeQuiz();
     }
   });
 
@@ -453,9 +622,10 @@ if (loginBtn) {
     });
     
     // Add a keydown event listener to check for Enter key press
-    searchInput.addEventListener('keydown', function(event) {
+    searchInput.addEventListener('keydown', async function(event) {
       if (event.key === 'Enter') {
         const searchTerm = searchInput.value.trim().toLowerCase();
+        if (!searchTerm) return;
 
 // Find index of the matching flashcard
 const index = appState.flashcards.findIndex(fc => fc.word.toLowerCase() === searchTerm);

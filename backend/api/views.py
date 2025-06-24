@@ -2,21 +2,27 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET, require_http_methods
 from database.dictionary import lookup_word
+from ai_agent import ai_lookup_word
+from database.db import flashcards_collection, users_collection
+from database.session_manager import create_session, get_user_by_token, delete_session
+from database.daily_content import daily_content
 import json
 from bson import ObjectId
-import sys
-import os
 import logging
+
+def get_token_from_request(request):
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Token "):
+        return auth_header.split(" ")[1]
+    return None
+
+def get_logged_in_user(request):
+    token = get_token_from_request(request)
+    return get_user_by_token(token)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Add project root (Learning Human Language with AI/) to sys.path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)).rsplit("backend", 1)[0])
-
-# Import MongoDB collection
-from database.db import flashcards_collection
 
 
 @csrf_exempt
@@ -24,6 +30,11 @@ from database.db import flashcards_collection
 def add_flashcard(request):
     """API Endpoint: Add a new flashcard to the database"""
     logger.info("Received POST request to add flashcard")
+    user_id = get_logged_in_user(request)
+
+    if not user_id:
+        return JsonResponse({"error": "User not authenticated."}, status=401)
+
     try:
         data = json.loads(request.body)
 
@@ -39,17 +50,17 @@ def add_flashcard(request):
             return JsonResponse({"error": "Both 'word' and 'meaning' are required."}, status=400)
 
         # Check for duplicates
-        existing = flashcards_collection.find_one({"word": word})
+        existing = flashcards_collection.find_one({"word": word, "user_id": ObjectId(user_id)})
         if existing:
             return JsonResponse({"error": "Flashcard already exists."}, status=409)
 
-        # Insert into MongoDB
         new_flashcard = {
             "word": word,
             "meaning": meaning,
             "example_sentence": example_sentence,
             "synonyms": synonyms,
-            "antonyms": antonyms
+            "antonyms": antonyms,
+            "user_id": ObjectId(user_id)
         }
         result = flashcards_collection.insert_one(new_flashcard)
 
@@ -67,8 +78,11 @@ def add_flashcard(request):
 def get_flashcards(request):
     """API Endpoint: Retrieve all flashcards from the database"""
     logger.info("Received GET request to fetch flashcards")
+    user_id = get_logged_in_user(request)
+    if not user_id:
+        return JsonResponse({"error": "User not authenticated."}, status=401)
     try:
-        flashcards = list(flashcards_collection.find({}, {"_id": 1, "word": 1, "meaning": 1, "example_sentence": 1, "synonyms": 1, "antonyms": 1}))
+        flashcards = list(flashcards_collection.find({"user_id": ObjectId(user_id)}, {"_id": 1, "word": 1, "meaning": 1, "example_sentence": 1, "synonyms": 1, "antonyms": 1}))
 
         # Convert ObjectId to string
         for flashcard in flashcards:
@@ -86,6 +100,10 @@ def get_flashcards(request):
 def delete_flashcard(request):
     """API Endpoint: Delete a flashcard by _id"""
     logger.info("Received DELETE request to delete flashcard")
+    user_id = get_logged_in_user(request)
+    if not user_id:
+        return JsonResponse({"error": "User not authenticated."}, status=401)
+
     try:
         data = json.loads(request.body)
         id_to_delete_str = data.get("id", "").strip()  # Expecting 'id' from frontend
@@ -98,7 +116,7 @@ def delete_flashcard(request):
         except:
             return JsonResponse({"error": "Invalid Flashcard ID format."}, status=400)
 
-        result = flashcards_collection.delete_one({"_id": id_to_delete})
+        result = flashcards_collection.delete_one({"_id": id_to_delete, "user_id": ObjectId(user_id)})
 
         if result.deleted_count == 1:
             return JsonResponse({"message": "Flashcard deleted successfully!"}, status=200)
@@ -117,6 +135,10 @@ def delete_flashcard(request):
 def search_flashcards(request):
     """API Endpoint: Search flashcards by word or meaning"""
     logger.info("Received GET request to search flashcards")
+    user_id = get_logged_in_user(request)
+    if not user_id:
+        return JsonResponse({"error": "User not authenticated."}, status=401)
+
     try:
         query = request.GET.get('query', '').strip()
 
@@ -125,6 +147,7 @@ def search_flashcards(request):
 
         # Search flashcards by word or meaning
         flashcards = list(flashcards_collection.find({
+            "user_id": ObjectId(user_id),
             "$or": [
                 {"word": {"$regex": query, "$options": "i"}},
                 {"meaning": {"$regex": query, "$options": "i"}}
@@ -140,42 +163,34 @@ def search_flashcards(request):
     except Exception as e:
         logger.error(f"Error searching flashcards: {str(e)}")
         return JsonResponse({"error": str(e)}, status=500)
-    
-from database.db import users_collection  # Assuming users_collection is defined in db.py
 
 @csrf_exempt
 @require_POST
 def login_user(request):
-    """API Endpoint: Log a user into the system"""
     logger.info("Received POST request to login user")
     try:
         data = json.loads(request.body)
-
-        # Extract username/email and password
-        identifier = data.get("identifier", "").strip()  # Changed to 'identifier' for flexibility
+        identifier = data.get("identifier", "").strip()
         password = data.get("password", "").strip()
 
-        # Validate input
         if not identifier or not password:
-            return JsonResponse({"error": "Both 'identifier' (username or email) and 'password' are required."}, status=400)
+            return JsonResponse({"error": "Both 'identifier' and 'password' are required."}, status=400)
 
-        # Check for user in database by username or email
         user = users_collection.find_one({
-            "$or": [
-                {"username": identifier},
-                {"email": identifier}
-            ]
+            "$or": [{"username": identifier}, {"email": identifier}]
         })
 
-        if not user:
+        if not user or user["password"] != password:
             return JsonResponse({"error": "Invalid username/email or password!"}, status=401)
 
-        # Assuming passwords are stored hashed, you need to compare the hashed password
-        if user["password"] != password:  # Replace with password hashing comparison for production!
-            return JsonResponse({"error": "Invalid username/email or password!"}, status=401)
+        token = create_session(str(user["_id"]))
 
-        # If successful login, return JWT token (this is just an example)
-        return JsonResponse({"token": "your_jwt_token_here"}, status=200)
+        return JsonResponse({
+            "message": "Login successful!",
+            "token": token,
+            "user_id": str(user["_id"]),
+            "username": user["username"]
+        }, status=200)
 
     except json.JSONDecodeError:
         logger.error("Invalid JSON format in request body.")
@@ -183,6 +198,7 @@ def login_user(request):
     except Exception as e:
         logger.error(f"Unexpected error in login_user: {str(e)}")
         return JsonResponse({"error": str(e)}, status=500)
+
 
 @csrf_exempt
 @require_POST
@@ -254,3 +270,32 @@ def word_search(request):
         logger.error(f"Error fetching word data: {str(e)}")
         return JsonResponse({"error": str(e)}, status=500)
 
+
+@require_GET
+def ai_word_search(request):
+    """API Endpoint: Retrieve word data generated by AI"""
+    word = request.GET.get('word', '').strip()
+    logger.info(f"Received AI word lookup request for: {word}")
+
+    if not word:
+        return JsonResponse({'error': 'No word provided.'}, status=400)
+
+    try:
+        word_info = ai_lookup_word(word)
+        logger.info(f"AI Word info generated: {word_info}")
+
+        return JsonResponse(word_info, status=200)
+
+    except Exception as e:
+        logger.error(f"Error generating AI word data: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=500)
+
+@require_GET
+def get_daily_content(request):
+    logger.info("Received request for daily content")
+    try:
+        content = daily_content()
+        return JsonResponse(content, status=200)
+    except Exception as e:
+        logger.error(f"Error fetching daily content: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=500)
