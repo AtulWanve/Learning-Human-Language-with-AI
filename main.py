@@ -1,5 +1,5 @@
 from backend.quiz import start_quiz
-from database.flashcards import add_flashcard
+from backend.database.flashcards import add_flashcard
 
 def menu():
     print("\nFlashcard App - MongoDB Version")
