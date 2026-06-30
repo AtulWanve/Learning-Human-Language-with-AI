@@ -1,9 +1,18 @@
 #ai_agent.py
 import os
+from dotenv import load_dotenv
 import google.generativeai as genai
 from datetime import datetime
 
-genai.configure(api_key = "")
+load_dotenv()
+
+GOOGLE_AI_API_KEY = os.getenv("GOOGLE_AI_API_KEY")
+if not GOOGLE_AI_API_KEY:
+    raise RuntimeError(
+        "GOOGLE_AI_API_KEY is not set. Add it to your .env file or environment "
+        "before starting the app (see README)."
+    )
+genai.configure(api_key=GOOGLE_AI_API_KEY)
 
 def get_available_model():
     preferred_models = ["gemini-1.5-flash", "gemini-1.5-pro"]
@@ -161,7 +170,7 @@ if __name__ == "__main__":
         print(phrase_of_the_day())
 
         # print("\n✅ Generating This Day in Language...")
-        # print(this_day_in_language(model))
+        # print(this_day_in_language())
 
         print("\n AI Lookup Test")
         word = input("Enter a word: ")
