@@ -173,6 +173,46 @@ if (dashboardBtn) {
 }
 
 
+  // Render senses beyond the primary one (pos_entries[0].senses[0])
+  function renderOtherSenses(posEntries) {
+    const container = get('other-senses');
+    const block = get('senses-block');
+    if (!container || !block) return;
+    container.innerHTML = '';
+    const items = [];
+    (posEntries || []).forEach((entry, pi) => {
+      (entry.senses || []).forEach((sense, si) => {
+        if (pi === 0 && si === 0) return;            // skip the primary (already shown)
+        items.push({
+          pos: entry.pos,
+          def: sense.definition || '',
+          ex: (sense.examples && sense.examples[0]) ? sense.examples[0].text : '',
+        });
+      });
+    });
+    if (items.length === 0) { block.classList.add('hidden'); return; }
+    block.classList.remove('hidden');
+    items.slice(0, 6).forEach((it) => {
+      const item = document.createElement('div');
+      item.className = 'sense-item';
+      const tag = document.createElement('span');
+      tag.className = 'pos-tag';
+      tag.textContent = it.pos || '';
+      const def = document.createElement('span');
+      def.className = 'sense-def';
+      def.textContent = ' ' + it.def;
+      item.appendChild(tag);
+      item.appendChild(def);
+      if (it.ex) {
+        const ex = document.createElement('p');
+        ex.className = 'sense-ex';
+        ex.textContent = it.ex;
+        item.appendChild(ex);
+      }
+      container.appendChild(item);
+    });
+  }
+
   // Function to display word info or error messages
   function displayWordInfo(data, query) {
     const wordEl = get('word');
@@ -181,25 +221,54 @@ if (dashboardBtn) {
     const synonymsEl = get('synonyms');
     const antonymsEl = get('antonyms');
     const resultsSection = get('results');
+    const ipaEl = get('ipa');
+    const posEl = get('pos');
+    const cefrEl = get('cefr');
+    const sensesBlock = get('senses-block');
 
     if (!wordEl || !meaningEl || !exampleEl || !synonymsEl || !antonymsEl) return;
 
+    const clearMeta = () => {
+      if (ipaEl) ipaEl.textContent = '';
+      if (posEl) posEl.textContent = '';
+      if (cefrEl) cefrEl.textContent = '';
+      if (sensesBlock) sensesBlock.classList.add('hidden');
+    };
+
+    // Network / server error
     if (data.error) {
-      resultsSection.classList.add('hidden')
+      resultsSection.classList.remove('hidden');
       wordEl.textContent = query || '';
       meaningEl.textContent = "No meaning available.";
       exampleEl.textContent = "Example not found.";
       synonymsEl.textContent = "Synonyms not found.";
       antonymsEl.textContent = "Antonyms not found.";
+      clearMeta();
       return;
     }
 
     resultsSection.classList.remove('hidden');
-    wordEl.textContent = query || '';
+    wordEl.textContent = query || data.headword || '';
+
+    // Word not in the curated learning set: show the friendly message, no rich data
+    if (data.found === false) {
+      meaningEl.textContent = data.meaning || "This word isn't in the learning set yet.";
+      exampleEl.textContent = '';
+      synonymsEl.textContent = '';
+      antonymsEl.textContent = '';
+      clearMeta();
+      return;
+    }
+
     meaningEl.textContent = data.meaning?.trim() || "No meaning available.";
     exampleEl.textContent = data.example_sentence?.trim() || "Example not found.";
     synonymsEl.textContent = (data.synonyms && data.synonyms.length > 0) ? data.synonyms.join(', ') : "Synonyms not found.";
     antonymsEl.textContent = (data.antonyms && data.antonyms.length > 0) ? data.antonyms.join(', ') : "Antonyms not found.";
+
+    if (ipaEl) ipaEl.textContent = data.pronunciation?.ipa ? `/${data.pronunciation.ipa}/` : '';
+    if (posEl) posEl.textContent = data.pos || '';
+    if (cefrEl) cefrEl.textContent = data.cefr || '';
+    renderOtherSenses(data.pos_entries);
   }
 
   API.getDailyContent()

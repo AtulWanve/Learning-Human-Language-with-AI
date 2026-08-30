@@ -6,7 +6,7 @@ django-cors-headers==4.7.0
 pymongo==4.12.0
 
 # AI (Google Gemini)
-google-generativeai==0.8.5
+google-genai==2.10.0
 
 # NLP (WordNet dictionary fallback)
 nltk==3.9.1
@@ -14,3 +14,10 @@ nltk==3.9.1
 # Utilities
 python-dotenv==1.2.2
 requests==2.32.3
+
+pydantic==2.11.5
+wordfreq==3.1.1
+phonecodes==2.0.0
+lemminflect==0.2.3
+# NLTK CMUdict is a data corpus, not a pip package:
+#   python -m nltk.downloader cmudict     (see runbook)
