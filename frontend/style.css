@@ -377,3 +377,47 @@ footer {
     padding: var(--space-md);
   }
 }
+
+/* Lookup rich fields (4.4b) */
+.word-meta {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: var(--space-xxs);
+}
+.word-meta:empty { display: none; }
+.ipa {
+  color: var(--text-primary);
+  opacity: 0.8;
+  font-size: 1rem;
+}
+.ipa:empty { display: none; }
+.pos-tag {
+  font-style: italic;
+  color: var(--text-primary);
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+.cefr-badge {
+  background-color: var(--accent-color);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 2px var(--space-xs);
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+.cefr-badge:empty { display: none; }
+.sense-item {
+  margin-bottom: var(--space-sm);
+  padding-left: var(--space-xs);
+  border-left: 2px solid var(--input-border);
+}
+.sense-def { font-size: 0.95rem; }
+.sense-ex {
+  margin: var(--space-xxs) 0 0;
+  font-style: italic;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
