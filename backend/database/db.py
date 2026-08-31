@@ -12,3 +12,5 @@ db = client[DB_NAME]
 flashcards_collection = db["flashcards"]  # Collection for storing flashcards
 users_collection = db["users"]  # Collection for storing user data
 daily_content_collection = db["daily_content"]  # Collection for daily AI-generated content
+words_collection = db["words"]  # Curated offline dictionary (Phase 1)
+rate_limits_collection = db["rate_limits"]  # Per-user/IP rate-limit tracking (TTL-indexed)

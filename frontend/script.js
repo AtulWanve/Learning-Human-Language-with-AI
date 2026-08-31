@@ -6,8 +6,16 @@ document.addEventListener('DOMContentLoaded', () => {
     lookupWord: (word) =>
       fetch(`${API_URL}/lookup-word/?word=${encodeURIComponent(word)}`),
 
-    aiLookupWord: (word) =>
-      fetch(`${API_URL}/lookup-word/ai/?word=${encodeURIComponent(word)}`),
+    aiLookupWord: (word) => {
+      const token = localStorage.getItem('auth_token');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Token ${token}`;
+      }
+      return fetch(`${API_URL}/lookup-word/ai/?word=${encodeURIComponent(word)}`, {
+        headers
+      });
+    },
 
     getDailyContent: () =>
       fetch(`${API_URL}/daily-content/`),
@@ -57,11 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  if (gamesBtn) {
-  gamesBtn.addEventListener('click', () => {
-    window.location.href = 'games.html';
-  });
-}
+  const homeTitle = get("home-title");
+  if (homeTitle) {
+    homeTitle.addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+  }
 
 if (dashboardBtn) {
   dashboardBtn.addEventListener('click', () => {
@@ -144,6 +153,95 @@ if (dashboardBtn) {
     });
   }
 
+  // Handle saving flashcards from the lookup results
+  const saveFlashcardBtn = get('save-flashcard-button');
+  const saveFlashcardMsg = get('save-flashcard-message');
+  let lookupSaveable = false;
+
+  if (saveFlashcardBtn) {
+    saveFlashcardBtn.addEventListener('click', async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        saveFlashcardMsg.textContent = 'Please login to save flashcards.';
+        saveFlashcardMsg.classList.remove('hidden');
+        saveFlashcardMsg.className = 'feedback-message error';
+        setTimeout(() => {
+          saveFlashcardMsg.classList.add('hidden');
+        }, 3000);
+        return;
+      }
+
+      const word = get('word').textContent;
+      if (!lookupSaveable || word === 'N/A' || !word) {
+         saveFlashcardMsg.textContent = 'No word to save.';
+         saveFlashcardMsg.classList.remove('hidden');
+         saveFlashcardMsg.className = 'feedback-message error';
+         setTimeout(() => {
+           saveFlashcardMsg.classList.add('hidden');
+         }, 3000);
+         return;
+      }
+
+      const meaning = get('meaning').textContent;
+      const example = get('example').textContent;
+
+      const synonymsText = get('synonyms').textContent;
+      let synonyms = [];
+      if (synonymsText && synonymsText !== 'N/A' && synonymsText !== 'Synonyms not found.') {
+        synonyms = synonymsText.split(',').map(s => s.trim());
+      }
+
+      const antonymsText = get('antonyms').textContent;
+      let antonyms = [];
+      if (antonymsText && antonymsText !== 'N/A' && antonymsText !== 'Antonyms not found.') {
+        antonyms = antonymsText.split(',').map(s => s.trim());
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/add/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Token ${token}`
+          },
+          body: JSON.stringify({
+            word: word,
+            meaning: meaning !== 'No meaning available.' ? meaning : '',
+            example_sentence: example !== 'Example not found.' ? example : '',
+            synonyms: synonyms,
+            antonyms: antonyms
+          })
+        });
+
+        if (response.ok) {
+          saveFlashcardMsg.textContent = 'Flashcard saved successfully!';
+          saveFlashcardMsg.classList.remove('hidden', 'error');
+          saveFlashcardMsg.classList.add('success');
+        } else {
+          let message = 'Failed to save flashcard.';
+          try {
+            const data = await response.json();
+            message = data.error || 'Failed to save flashcard.';
+          } catch (e) {
+            message = 'Failed to save flashcard.';
+          }
+          saveFlashcardMsg.textContent = message;
+          saveFlashcardMsg.classList.remove('hidden', 'success');
+          saveFlashcardMsg.classList.add('error');
+        }
+      } catch (error) {
+        console.error('Error saving flashcard:', error);
+        saveFlashcardMsg.textContent = 'Network error occurred.';
+        saveFlashcardMsg.classList.remove('hidden', 'success');
+        saveFlashcardMsg.classList.add('error');
+      }
+
+      setTimeout(() => {
+        saveFlashcardMsg.classList.add('hidden');
+      }, 3000);
+    });
+  }
+
   // Search button toggles input focus (or triggers search if input visible)
   if (searchBtn && searchInput) {
     searchBtn.addEventListener('click', async () => {
@@ -155,6 +253,16 @@ if (dashboardBtn) {
 
       try {
         const response = await apiCall(query);
+
+        if (response.status === 401) {
+          displayWordInfo({ error: 'Please log in to use AI Lookup.' }, query);
+          return;
+        }
+        if (response.status === 429) {
+          displayWordInfo({ error: 'Too many requests — please wait a minute and try again.' }, query);
+          return;
+        }
+
         const data = await response.json();
         displayWordInfo(data, query);
       } catch (error) {
@@ -163,7 +271,7 @@ if (dashboardBtn) {
     });
   }
 
-  if (searchInput) {
+  if (searchInput && searchBtn) {
   searchInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
@@ -237,6 +345,7 @@ if (dashboardBtn) {
 
     // Network / server error
     if (data.error) {
+      lookupSaveable = false;
       resultsSection.classList.remove('hidden');
       wordEl.textContent = query || '';
       meaningEl.textContent = "No meaning available.";
@@ -252,6 +361,7 @@ if (dashboardBtn) {
 
     // Word not in the curated learning set: show the friendly message, no rich data
     if (data.found === false) {
+      lookupSaveable = false;
       meaningEl.textContent = data.meaning || "This word isn't in the learning set yet.";
       exampleEl.textContent = '';
       synonymsEl.textContent = '';
@@ -259,6 +369,8 @@ if (dashboardBtn) {
       clearMeta();
       return;
     }
+
+    lookupSaveable = true;
 
     meaningEl.textContent = data.meaning?.trim() || "No meaning available.";
     exampleEl.textContent = data.example_sentence?.trim() || "Example not found.";
