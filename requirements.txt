@@ -6,7 +6,7 @@ django-cors-headers==4.7.0
 pymongo==4.12.0
 
 # AI (Google Gemini)
-google-genai==2.10.0
+google-genai==2.20.0
 
 # NLP (WordNet dictionary fallback)
 nltk==3.9.1
