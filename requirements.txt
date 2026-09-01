@@ -1,5 +1,5 @@
 # Web framework
-Django==5.2.15
+Django==6.1
 django-cors-headers==4.7.0
 
 # Database
