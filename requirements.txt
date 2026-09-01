@@ -15,7 +15,7 @@ nltk==3.9.1
 python-dotenv==1.2.2
 requests==2.32.3
 
-pydantic>=2.12.5
+pydantic>=2.13.5
 wordfreq==3.1.1
 phonecodes==2.0.0
 lemminflect==0.2.3
