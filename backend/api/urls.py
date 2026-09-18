@@ -1,7 +1,6 @@
 # api/urls.py
 from django.urls import path
-from .views import add_flashcard, get_flashcards, delete_flashcard, search_flashcards, login_user, signup_user, word_search, ai_word_search, get_daily_content
-from . import views
+from .views import add_flashcard, get_flashcards, delete_flashcard, search_flashcards, login_user, signup_user, word_search, ai_word_search, get_daily_content, review_due, submit_review
 
 urlpatterns = [
     path("add/", add_flashcard, name="add_flashcard"),
@@ -16,5 +15,7 @@ urlpatterns = [
     path("lookup-word/ai/", ai_word_search, name="ai_lookup_word"),
 
     path("daily-content/", get_daily_content, name="get_daily_content"),
+    path("review/due/", review_due, name="review_due"),
+    path("review/", submit_review, name="submit_review"),
 
 ]
