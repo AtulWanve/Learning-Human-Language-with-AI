@@ -4,12 +4,13 @@ from django.views.decorators.http import require_POST, require_GET, require_http
 from database.dictionary import lookup_word
 from ai_agent import ai_lookup_word
 from database.db import flashcards_collection, users_collection
-from database.session_manager import create_session, get_user_by_token, delete_session
+from database.session_manager import create_session, get_user_by_token
 from database.daily_content import daily_content
 import json
 from bson import ObjectId
 import logging
 from api.ratelimit import is_rate_limited, get_client_ip
+from database.review import get_due_cards, record_review
 
 def get_token_from_request(request):
     auth_header = request.headers.get("Authorization")
@@ -114,7 +115,7 @@ def delete_flashcard(request):
 
         try:
             id_to_delete = ObjectId(id_to_delete_str)  # Convert string ID to ObjectId
-        except:
+        except Exception:
             return JsonResponse({"error": "Invalid Flashcard ID format."}, status=400)
 
         result = flashcards_collection.delete_one({"_id": id_to_delete, "user_id": ObjectId(user_id)})
@@ -129,7 +130,7 @@ def delete_flashcard(request):
         return JsonResponse({"error": "Invalid JSON format."}, status=400)
     except Exception as e:
         logger.error(f"Unexpected error in delete_flashcard: {str(e)}")
-        return JsonResponse({"error": str(e)}, status=500)
+        return JsonResponse({"error": "Internal server error."}, status=500)
 
 
 @require_GET
@@ -237,7 +238,7 @@ def signup_user(request):
         }
 
         # Insert the new user into the MongoDB database
-        result = users_collection.insert_one(new_user)
+        users_collection.insert_one(new_user)
 
         return JsonResponse({"message": "User created successfully!"}, status=201)
 
@@ -246,7 +247,7 @@ def signup_user(request):
         return JsonResponse({"error": "Invalid JSON format."}, status=400)
     except Exception as e:
         logger.error(f"Unexpected error in signup_user: {str(e)}")
-        return JsonResponse({"error": str(e)}, status=500)
+        return JsonResponse({"error": "Internal server error."}, status=500)
 
 
 @require_GET
@@ -269,7 +270,7 @@ def word_search(request):
 
     except Exception as e:
         logger.error(f"Error fetching word data: {str(e)}")
-        return JsonResponse({"error": str(e)}, status=500)
+        return JsonResponse({"error": "Internal server error."}, status=500)
 
 
 @require_GET
@@ -323,4 +324,71 @@ def get_daily_content(request):
         return JsonResponse(content, status=200)
     except Exception as e:
         logger.error(f"Error fetching daily content: {str(e)}")
+        return JsonResponse({"error": "Internal server error."}, status=500)
+
+
+@require_GET
+def review_due(request):
+    """API Endpoint: Get flashcards due for review (SM-2 scheduled)"""
+    logger.info("Received request for due review cards")
+    user_id = get_logged_in_user(request)
+    if not user_id:
+        return JsonResponse({"error": "User not authenticated."}, status=401)
+
+    try:
+        limit = int(request.GET.get("limit", 20))
+        limit = max(1, min(limit, 50))  # clamp to 1-50
+    except (ValueError, TypeError):
+        limit = 20
+
+    try:
+        cards = get_due_cards(user_id, limit=limit)
+        return JsonResponse({"due": cards, "count": len(cards)}, status=200)
+    except Exception as e:
+        logger.error(f"Error fetching due cards: {str(e)}")
+        return JsonResponse({"error": "Internal server error."}, status=500)
+
+
+@csrf_exempt
+@require_POST
+def submit_review(request):
+    """API Endpoint: Record a flashcard review result (SM-2 scheduling)"""
+    logger.info("Received review submission")
+    user_id = get_logged_in_user(request)
+    if not user_id:
+        return JsonResponse({"error": "User not authenticated."}, status=401)
+
+    try:
+        data = json.loads(request.body)
+        if not isinstance(data, dict):
+            return JsonResponse({"error": "Invalid JSON format."}, status=400)
+
+        flashcard_id_raw = data.get("flashcard_id")
+        if not isinstance(flashcard_id_raw, str):
+            return JsonResponse({"error": "flashcard_id is required."}, status=400)
+        flashcard_id = flashcard_id_raw.strip()
+        quality = data.get("quality")
+
+        if not flashcard_id:
+            return JsonResponse({"error": "flashcard_id is required."}, status=400)
+
+        if quality is None or type(quality) is not int or quality < 0 or quality > 5:
+            return JsonResponse(
+                {"error": "quality must be an integer 0-5."},
+                status=400,
+            )
+
+        result = record_review(user_id, flashcard_id, quality)
+        if result is None:
+            return JsonResponse({"error": "Flashcard not found."}, status=404)
+
+        return JsonResponse({"message": "Review recorded.", "schedule": result},
+                            status=200)
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON format."}, status=400)
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    except Exception as e:
+        logger.error(f"Error recording review: {str(e)}")
         return JsonResponse({"error": "Internal server error."}, status=500)
