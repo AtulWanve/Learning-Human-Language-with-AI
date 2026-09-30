@@ -6,8 +6,12 @@ updates:
     schedule:
       interval: "weekly"
     # Only open PRs for security vulnerabilities, to minimize noise/breakages
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     target-branch: "main"
     labels:
-      - "dependencies"
       - "security"
+    groups:
+      python-dependencies:
+        applies-to: security-updates
+        patterns:
+          - "*"
